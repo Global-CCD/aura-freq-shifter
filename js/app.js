@@ -1,5 +1,5 @@
 /**
- * App.js v3.2.0 - Complete UI Controller with Matrix Auditioning & 32-Bit RT60 Analyzer
+ * App.js v3.3.0 - Automated Startup Diagnostics & Indoor/Outdoor Spatial Router
  */
 import { AudioEngine } from './audio-engine.js';
 
@@ -19,88 +19,61 @@ const diagnosticRecords = [
 ];
 
 const roomMetadata = {
-  micro_helmet: "Volume: ~0.08 m³ | RT60: 0.02s | Cavity Resonance: 1,150 Hz | ITD: 0.3ms (Cranial Pod - ABSOLUTE MIN)",
-  cockpit: "Volume: ~1.2 m³ | RT60: 0.05s | Cavity Resonance: 720 Hz | ITD: 0.8ms (Aircraft Cockpit / Kiosk)",
-  booth: "Volume: ~2.5 m³ | RT60: 0.08s | Cavity Resonance: 520 Hz | ITD: 1.2ms (Ultra-Damped Vocal Isolation Pod)",
-  office: "Volume: ~35 m³ | RT60: 0.35s | Cavity Resonance: 240 Hz | ITD: 2.5ms (Treated Home Studio / Bedroom)",
-  standard: "Volume: ~90 m³ | RT60: 0.75s | Cavity Resonance: 175 Hz | ITD: 3.5ms (Tracking Studio - DEFAULT BASELINE)",
-  auditorium: "Volume: ~2,800 m³ | RT60: 1.80s | Air Resonance: 95 Hz | ITD: 8.0ms (Recital Concert Hall)",
-  cathedral: "Volume: ~85,000 m³ | RT60: 5.50s | Air Resonance: 48 Hz | ITD: 15.0ms (Gothic Cathedral Nave)",
-  hangar: "Volume: ~180,000 m³ | RT60: 7.20s | Air Resonance: 34 Hz | ITD: 22.0ms (Airship Hangar / Cistern)",
-  mega_canyon: "Volume: ~650,000 m³ | RT60: 10.50s | Air Resonance: 22 Hz | ITD: 35.0ms (Granite Canyon - ABSOLUTE MAX)"
+  // Indoor
+  micro_helmet: "INDOOR: Volume: ~0.08 m³ | RT60: 0.02s | Cavity Resonance: 1,150 Hz | ITD: 0.3ms (Cranial Pod - INDOOR ABSOLUTE MIN)",
+  cockpit: "INDOOR: Volume: ~1.2 m³ | RT60: 0.05s | Cavity Resonance: 720 Hz | ITD: 0.8ms (Aircraft Cockpit / Kiosk)",
+  booth: "INDOOR: Volume: ~2.5 m³ | RT60: 0.08s | Cavity Resonance: 520 Hz | ITD: 1.2ms (Ultra-Damped Vocal Isolation Pod)",
+  office: "INDOOR: Volume: ~35 m³ | RT60: 0.35s | Cavity Resonance: 240 Hz | ITD: 2.5ms (Treated Home Studio / Bedroom)",
+  standard: "INDOOR: Volume: ~90 m³ | RT60: 0.75s | Cavity Resonance: 175 Hz | ITD: 3.5ms (Tracking Studio - DEFAULT BASELINE)",
+  auditorium: "INDOOR: Volume: ~2,800 m³ | RT60: 1.80s | Air Resonance: 95 Hz | ITD: 8.0ms (Recital Concert Hall)",
+  cathedral: "INDOOR: Volume: ~85,000 m³ | RT60: 5.50s | Air Resonance: 48 Hz | ITD: 15.0ms (Gothic Cathedral Nave)",
+  hangar: "INDOOR: Volume: ~180,000 m³ | RT60: 7.20s | Air Resonance: 34 Hz | ITD: 22.0ms (Airship Hangar / Cistern)",
+  subterranean_vault: "INDOOR: Volume: ~350,000 m³ | RT60: 8.80s | Air Resonance: 28 Hz | ITD: 28.0ms (Salt Mine Vault - INDOOR ABSOLUTE MAX)",
+
+  // Outdoor
+  urban_balcony: "OUTDOOR: Eff. Volume: ~500 m³ | RT60: 0.40s | Ground Bounce: 180 Hz | ITD: 4.0ms (Urban Courtyard - OUTDOOR MIN)",
+  amphitheater: "OUTDOOR: Eff. Volume: ~25,000 m³ | RT60: 1.20s | Open Air: 110 Hz | ITD: 12.0ms (Roman Amphitheater)",
+  forest_clearing: "OUTDOOR: Eff. Volume: ~75,000 m³ | RT60: 1.90s | Pine Scatter: 85 Hz | ITD: 18.0ms (Forest Clearing)",
+  quarry: "OUTDOOR: Eff. Volume: ~300,000 m³ | RT60: 4.80s | Rock Wall: 55 Hz | ITD: 25.0ms (Granite Quarry Basin)",
+  alpine_valley: "OUTDOOR: Eff. Volume: ~1,500,000 m³ | RT60: 8.50s | Mountain Ridge: 32 Hz | ITD: 35.0ms (Alpine Valley)",
+  mega_canyon: "OUTDOOR: Eff. Volume: ~5,000,000 m³+ | RT60: 12.00s | Molecular Air: 18 Hz | ITD: 45.0ms (Desert Canyon - OUTDOOR ABSOLUTE MAX)"
 };
 
 const presetsLibrary = {
   vocal_chorus: {
     name: "Subtle Vocal Doubler / Chorus",
-    shiftHz: 3,
-    lfoShape: 0,
-    lfoDepth: 2.0,
-    lfoRate: 0.5,
-    lfoPolarity: 0,
-    dryWet: 0.5,
-    space: "office",
-    silenceVoids: 0,
-    desc: "Adds dimensional micro-pitch drift and warm residential early reflections to speech/vocal tracks."
+    shiftHz: 3, lfoShape: 0, lfoDepth: 2.0, lfoRate: 0.5, lfoPolarity: 0,
+    dryWet: 0.5, space: "office", silenceVoids: 0,
+    desc: "Adds dimensional micro-pitch drift and warm residential early reflections to vocals."
   },
   sci_fi_void: {
     name: "Deep Sci-Fi Void Resonator",
-    shiftHz: -150,
-    lfoShape: 4,
-    lfoDepth: 50.0,
-    lfoRate: 2.0,
-    lfoPolarity: 1,
-    dryWet: 1.0,
-    space: "cathedral",
-    silenceVoids: 1,
+    shiftHz: -150, lfoShape: 4, lfoDepth: 50.0, lfoRate: 2.0, lfoPolarity: 1,
+    dryWet: 1.0, space: "cathedral", silenceVoids: 1,
     desc: "Cavernous downward pitch translation with active 4th-order zero-energy silence voids at 1–2k and 8.5–9.5k."
   },
   passthrough_clean: {
     name: "Acoustic Room Normalizer",
-    shiftHz: 0,
-    lfoShape: 0,
-    lfoDepth: 0.0,
-    lfoRate: 1.0,
-    lfoPolarity: 0,
-    dryWet: 0.0,
-    space: "standard",
-    silenceVoids: 0,
+    shiftHz: 0, lfoShape: 0, lfoDepth: 0.0, lfoRate: 1.0, lfoPolarity: 0,
+    dryWet: 0.0, space: "standard", silenceVoids: 0,
     desc: "Transparent linear dry passthrough for acoustic baseline testing."
   },
   spectral_disrupter: {
     name: "Wideband Ring-Mod Disrupter",
-    shiftHz: 750,
-    lfoShape: 1,
-    lfoDepth: 250.0,
-    lfoRate: 5.0,
-    lfoPolarity: 0,
-    dryWet: 0.9,
-    space: "auditorium",
-    silenceVoids: 1,
+    shiftHz: 750, lfoShape: 1, lfoDepth: 250.0, lfoRate: 5.0, lfoPolarity: 0,
+    dryWet: 0.9, space: "auditorium", silenceVoids: 1,
     desc: "Fast non-harmonic frequency sweeping with dual speech/sibilance voids."
   },
   whisper_pod: {
     name: "Whisper Isolation Pod",
-    shiftHz: 10,
-    lfoShape: 5,
-    lfoDepth: 5.0,
-    lfoRate: 1.0,
-    lfoPolarity: 0,
-    dryWet: 0.75,
-    space: "micro_helmet",
-    silenceVoids: 0,
+    shiftHz: 10, lfoShape: 5, lfoDepth: 5.0, lfoRate: 1.0, lfoPolarity: 0,
+    dryWet: 0.75, space: "micro_helmet", silenceVoids: 0,
     desc: "Cranial 0.08 m³ boundary reflection damping with gentle stochastic jitter."
   },
   void_sieve: {
     name: "Pure Spectral Void Sieve",
-    shiftHz: 0,
-    lfoShape: 0,
-    lfoDepth: 0.0,
-    lfoRate: 1.0,
-    lfoPolarity: 0,
-    dryWet: 1.0,
-    space: "standard",
-    silenceVoids: 1,
+    shiftHz: 0, lfoShape: 0, lfoDepth: 0.0, lfoRate: 1.0, lfoPolarity: 0,
+    dryWet: 1.0, space: "standard", silenceVoids: 1,
     desc: "0 Hz neutral passthrough with absolute 4th-order zero-energy voids at 1–2 kHz and 8.5–9.5 kHz."
   }
 };
@@ -256,7 +229,8 @@ window.applyPreset = async function(presetKey) {
   if (p.space) {
     document.getElementById("roomPresetSelect").value = p.space;
     updateRoomMetadataDisplay();
-    if (document.getElementById("inputSourceTypeSelect").value === 'room') {
+    const mode = document.getElementById("inputSourceTypeSelect").value;
+    if (mode === 'room_indoors' || mode === 'room_outdoors' || mode === 'room') {
       await applyInputSourceChange();
     }
   }
@@ -277,9 +251,22 @@ window.applyPreset = async function(presetKey) {
   }
 };
 
+/**
+ * Automated Pre-Flight Health Check (Initiates on App Load)
+ */
 async function runPreFlightHealthCheck() {
+  const badge = document.getElementById("preflightStatusBadge");
+  if (badge) {
+    badge.className = "badge-indicator badge-amber";
+    badge.innerHTML = `<span class="pulse-dot"></span> Diagnostics In Progress...`;
+  }
+
   if (window.location.protocol === 'file:') {
     updateDiagRecord(1, "Malfunctioning", "file:// origin detected. AudioWorklets require HTTP/HTTPS (run npx serve)");
+    if (badge) {
+      badge.className = "badge-indicator badge-red";
+      badge.innerHTML = `&#10008; Insecure file:// Origin`;
+    }
     return;
   }
 
@@ -321,6 +308,11 @@ async function runPreFlightHealthCheck() {
   }
 
   updateDiagRecord(6, "Active", "Audio routes automatically to system default output");
+
+  if (badge) {
+    badge.className = "badge-indicator badge-green";
+    badge.innerHTML = `&#10004; Pre-Flight Active &amp; Verified`;
+  }
 }
 
 async function populateHardwareDeviceLists() {
@@ -389,9 +381,13 @@ async function applyInputSourceChange() {
       await populateHardwareDeviceLists();
     } else if (type === 'noise') {
       setBadge("inputStatusBadge", "green", "&#10004;", `${color.toUpperCase()} Noise Active`);
-    } else if (type === 'room') {
+    } else if (type === 'room_indoors') {
       const roomLabel = document.getElementById("roomPresetSelect").selectedOptions[0].text.split('(')[0].trim();
-      setBadge("inputStatusBadge", "green", "&#10004;", `${roomLabel} Active`);
+      setBadge("inputStatusBadge", "green", "&#10004;", `${roomLabel} (Indoor)`);
+      syncActiveMatrixRow(roomPreset);
+    } else if (type === 'room_outdoors') {
+      const roomLabel = document.getElementById("roomPresetSelect").selectedOptions[0].text.split('(')[0].trim();
+      setBadge("inputStatusBadge", "green", "&#10004;", `${roomLabel} (Outdoor)`);
       syncActiveMatrixRow(roomPreset);
     } else if (type === 'file') {
       setBadge("inputStatusBadge", "green", "&#10004;", "File Audio Playing");
@@ -441,7 +437,8 @@ function updateDSPParameters() {
 }
 
 window.switchToVirtualRoom = async function(preset = 'standard') {
-  document.getElementById("inputSourceTypeSelect").value = "room";
+  const isOutdoor = preset.startsWith('urban') || preset.startsWith('amphi') || preset.startsWith('forest') || preset.startsWith('quarry') || preset.startsWith('alpine') || preset.startsWith('mega');
+  document.getElementById("inputSourceTypeSelect").value = isOutdoor ? "room_outdoors" : "room_indoors";
   document.getElementById("roomPresetSelect").value = preset;
   updateRoomMetadataDisplay();
   onInputTypeChanged();
@@ -534,10 +531,22 @@ window.executeRoomRT60Analyzer = async function() {
 
 function onInputTypeChanged() {
   const mode = document.getElementById("inputSourceTypeSelect").value;
+  const isRoom = (mode === 'room_indoors' || mode === 'room_outdoors');
   document.getElementById("micInputSubPanel").style.display = mode === "mic" ? "block" : "none";
   document.getElementById("noiseInputSubPanel").style.display = mode === "noise" ? "block" : "none";
   document.getElementById("fileInputSubPanel").style.display = mode === "file" ? "block" : "none";
-  document.getElementById("roomInputSubPanel").style.display = mode === "room" ? "block" : "none";
+  document.getElementById("roomInputSubPanel").style.display = isRoom ? "block" : "none";
+
+  // If outdoor stream selected and indoor space active, switch to outdoor space default
+  const roomSelect = document.getElementById("roomPresetSelect");
+  if (mode === 'room_outdoors' && !roomSelect.value.startsWith('urban') && !roomSelect.value.startsWith('amphi') && !roomSelect.value.startsWith('forest') && !roomSelect.value.startsWith('quarry') && !roomSelect.value.startsWith('alpine') && !roomSelect.value.startsWith('mega')) {
+    roomSelect.value = "forest_clearing";
+    updateRoomMetadataDisplay();
+  } else if (mode === 'room_indoors' && (roomSelect.value.startsWith('urban') || roomSelect.value.startsWith('amphi') || roomSelect.value.startsWith('forest') || roomSelect.value.startsWith('quarry') || roomSelect.value.startsWith('alpine') || roomSelect.value.startsWith('mega'))) {
+    roomSelect.value = "standard";
+    updateRoomMetadataDisplay();
+  }
+
   showMicFallbackBanner(false);
   markHardwarePending();
 }
@@ -811,16 +820,17 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("inputSourceTypeSelect").onchange = onInputTypeChanged;
   document.getElementById("roomPresetSelect").onchange = () => {
     updateRoomMetadataDisplay();
-    if (document.getElementById("inputSourceTypeSelect").value === 'room') {
+    const mode = document.getElementById("inputSourceTypeSelect").value;
+    if (mode === 'room_indoors' || mode === 'room_outdoors' || mode === 'room') {
       applyInputSourceChange();
     }
   };
 
-  // Core & Secondary Parameter Group Toggles
   document.getElementById("enableCoreParamsCheck").onchange = e => {
     engine.enableCoreParams = e.target.checked;
     engine.irBufferCache.clear();
-    if (document.getElementById("inputSourceTypeSelect").value === 'room') {
+    const mode = document.getElementById("inputSourceTypeSelect").value;
+    if (mode === 'room_indoors' || mode === 'room_outdoors' || mode === 'room') {
       applyInputSourceChange();
     }
   };
@@ -828,7 +838,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("enableSecondaryParamsCheck").onchange = e => {
     engine.enableSecondaryParams = e.target.checked;
     engine.irBufferCache.clear();
-    if (document.getElementById("inputSourceTypeSelect").value === 'room') {
+    const mode = document.getElementById("inputSourceTypeSelect").value;
+    if (mode === 'room_indoors' || mode === 'room_outdoors' || mode === 'room') {
       applyInputSourceChange();
     }
   };
@@ -874,6 +885,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // Automated Startup Initialization: Table Build & Pre-Flight Probe Launch Immediately
   await initDiagnosticsTable();
   await runPreFlightHealthCheck();
 });

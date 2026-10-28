@@ -1,5 +1,5 @@
 /* ==========================================================================
-   DSP Frequency Shifter & Live Audio Router v3.2.0 - Theme & Component Styles
+   DSP Frequency Shifter & Live Audio Router v3.3.0 - Theme & Component Styles
    ========================================================================== */
 
 :root[data-theme="light"] {
@@ -293,7 +293,7 @@ article.dsp-card {
 
 .matrix-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 940px;
   border-collapse: collapse;
   font-size: 0.85rem;
   margin: 0;

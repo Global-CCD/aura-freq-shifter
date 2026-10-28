@@ -1,5 +1,5 @@
 /**
- * AudioEngine v3.2.0 - Binaural ITD Decorrelation & 32-Bit Float RT60 Determination
+ * AudioEngine v3.3.0 - Indoor & Outdoor Spatial Acoustics & Automated Diagnostics
  */
 export class AudioEngine {
   constructor() {
@@ -156,9 +156,6 @@ export class AudioEngine {
     });
   }
 
-  /**
-   * Generates or retrieves cached stereo analytical impulse response with Binaural ITD
-   */
   getAnalyticalImpulseBuffer(presetKey, p, useSecondary) {
     const cacheKey = `${presetKey}_${useSecondary ? 'sec' : 'flat'}`;
     if (this.irBufferCache.has(cacheKey)) {
@@ -170,10 +167,8 @@ export class AudioEngine {
     const length = Math.floor(sRate * p.irLengthSec);
     const impulse = ctx.createBuffer(2, length, sRate);
 
-    // Channel 0 (Left) and Channel 1 (Right) with Binaural Interaural Time Difference (ITD)
     for (let ch = 0; ch < 2; ch++) {
       const chData = impulse.getChannelData(ch);
-      // Right channel decorrelated by physiological interaural delay
       const itdOffsetSamples = (ch === 1) ? Math.floor(sRate * p.itdSec) : 0;
       const preDelay = p.preDelaySamples + itdOffsetSamples;
 
@@ -188,7 +183,6 @@ export class AudioEngine {
         const noise = (Math.random() * 2.0) - 1.0;
 
         if (useSecondary) {
-          // Secondary Group: Atmospheric High-Frequency Absorption & Bass Warmth Ratio
           const hfAtten = 1.0 / (1.0 + (p.hfDamping * t * 4.0));
           const bassBoost = 1.0 + (p.bassWarmth - 1.0) * Math.exp(-t / 0.8);
           chData[i] = noise * decay * p.reflectionGain * hfAtten * bassBoost;
@@ -208,97 +202,121 @@ export class AudioEngine {
     const sRate = ctx.sampleRate;
     const merger = ctx.createGain();
 
-    // 9-Profile Continuum (0.08 m³ to 650,000 m³) with Binaural ITD Decorrelation
+    // 15-Profile Indoor & Outdoor Acoustic Continuum
     const profiles = {
-      // ABSOLUTE LOWER LIMIT: 0.08 m³ (Cranial/Helmet Pod)
+      // --- INDOOR ENCLOSED ARCHITECTURE ---
       micro_helmet: {
-        resonanceFreq: 1150, resonanceQ: 3.2, airGain: 0.12,
+        isOutdoor: false, resonanceFreq: 1150, resonanceQ: 3.2, airGain: 0.12,
         irLengthSec: 0.06, decayRate: 0.008, preDelaySamples: 0,
         itdSec: 0.0003, reflectionGain: 0.45, hfDamping: 0.00, bassWarmth: 0.85
       },
-      // Lower Tier 2: 1.2 m³ (Aircraft Cockpit / Kiosk)
       cockpit: {
-        resonanceFreq: 720, resonanceQ: 2.6, airGain: 0.14,
+        isOutdoor: false, resonanceFreq: 720, resonanceQ: 2.6, airGain: 0.14,
         irLengthSec: 0.12, decayRate: 0.016, preDelaySamples: Math.floor(sRate * 0.002),
         itdSec: 0.0008, reflectionGain: 0.42, hfDamping: 0.00, bassWarmth: 0.90
       },
-      // Lower Tier 3: 2.5 m³ (Vocal Booth)
       booth: {
-        resonanceFreq: 520, resonanceQ: 2.2, airGain: 0.16,
+        isOutdoor: false, resonanceFreq: 520, resonanceQ: 2.2, airGain: 0.16,
         irLengthSec: 0.18, decayRate: 0.025, preDelaySamples: 0,
         itdSec: 0.0012, reflectionGain: 0.40, hfDamping: 0.00, bassWarmth: 0.95
       },
-      // Small Studio / Bedroom: 35 m³
       office: {
-        resonanceFreq: 240, resonanceQ: 1.6, airGain: 0.19,
+        isOutdoor: false, resonanceFreq: 240, resonanceQ: 1.6, airGain: 0.19,
         irLengthSec: 0.45, decayRate: 0.065, preDelaySamples: Math.floor(sRate * 0.006),
         itdSec: 0.0025, reflectionGain: 0.38, hfDamping: 0.08, bassWarmth: 1.05
       },
-      // DEFAULT: Standard Tracking Studio (90 m³) - Baseline Reference
       standard: {
-        resonanceFreq: 175, resonanceQ: 1.4, airGain: 0.22,
+        isOutdoor: false, resonanceFreq: 175, resonanceQ: 1.4, airGain: 0.22,
         irLengthSec: 0.75, decayRate: 0.12, preDelaySamples: 0,
         itdSec: 0.0035, reflectionGain: 0.35, hfDamping: 0.00, bassWarmth: 1.00
       },
-      // Concert Recital Hall: 2,800 m³
       auditorium: {
-        resonanceFreq: 95, resonanceQ: 1.1, airGain: 0.26,
+        isOutdoor: false, resonanceFreq: 95, resonanceQ: 1.1, airGain: 0.26,
         irLengthSec: 2.2, decayRate: 0.35, preDelaySamples: Math.floor(sRate * 0.022),
         itdSec: 0.0080, reflectionGain: 0.32, hfDamping: 0.25, bassWarmth: 1.15
       },
-      // Gothic Cathedral: 85,000 m³
       cathedral: {
-        resonanceFreq: 48, resonanceQ: 0.8, airGain: 0.32,
+        isOutdoor: false, resonanceFreq: 48, resonanceQ: 0.8, airGain: 0.32,
         irLengthSec: 6.0, decayRate: 0.95, preDelaySamples: Math.floor(sRate * 0.045),
         itdSec: 0.0150, reflectionGain: 0.28, hfDamping: 0.50, bassWarmth: 1.30
       },
-      // Upper Tier 2: 180,000 m³ (Airship Hangar / Cistern)
       hangar: {
-        resonanceFreq: 34, resonanceQ: 0.7, airGain: 0.36,
+        isOutdoor: false, resonanceFreq: 34, resonanceQ: 0.7, airGain: 0.36,
         irLengthSec: 7.8, decayRate: 1.25, preDelaySamples: Math.floor(sRate * 0.065),
         itdSec: 0.0220, reflectionGain: 0.25, hfDamping: 0.70, bassWarmth: 1.40
       },
-      // ABSOLUTE UPPER LIMIT: 650,000 m³ (Granite Mega-Canyon)
+      subterranean_vault: {
+        isOutdoor: false, resonanceFreq: 28, resonanceQ: 0.65, airGain: 0.38,
+        irLengthSec: 9.5, decayRate: 1.50, preDelaySamples: Math.floor(sRate * 0.075),
+        itdSec: 0.0280, reflectionGain: 0.24, hfDamping: 0.80, bassWarmth: 1.50
+      },
+
+      // --- OUTDOOR OPEN-AIR ENVIRONMENTS ---
+      urban_balcony: {
+        isOutdoor: true, resonanceFreq: 180, resonanceQ: 0.9, airGain: 0.18,
+        irLengthSec: 0.55, decayRate: 0.07, preDelaySamples: Math.floor(sRate * 0.008),
+        itdSec: 0.0040, reflectionGain: 0.35, hfDamping: 0.15, bassWarmth: 0.90
+      },
+      amphitheater: {
+        isOutdoor: true, resonanceFreq: 110, resonanceQ: 0.75, airGain: 0.22,
+        irLengthSec: 1.6, decayRate: 0.22, preDelaySamples: Math.floor(sRate * 0.025),
+        itdSec: 0.0120, reflectionGain: 0.30, hfDamping: 0.35, bassWarmth: 0.95
+      },
+      forest_clearing: {
+        isOutdoor: true, resonanceFreq: 85, resonanceQ: 0.6, airGain: 0.25,
+        irLengthSec: 2.5, decayRate: 0.35, preDelaySamples: Math.floor(sRate * 0.040),
+        itdSec: 0.0180, reflectionGain: 0.28, hfDamping: 0.55, bassWarmth: 1.05
+      },
+      quarry: {
+        isOutdoor: true, resonanceFreq: 55, resonanceQ: 0.65, airGain: 0.30,
+        irLengthSec: 5.5, decayRate: 0.85, preDelaySamples: Math.floor(sRate * 0.060),
+        itdSec: 0.0250, reflectionGain: 0.26, hfDamping: 0.65, bassWarmth: 1.20
+      },
+      alpine_valley: {
+        isOutdoor: true, resonanceFreq: 32, resonanceQ: 0.5, airGain: 0.35,
+        irLengthSec: 9.0, decayRate: 1.45, preDelaySamples: Math.floor(sRate * 0.090),
+        itdSec: 0.0350, reflectionGain: 0.22, hfDamping: 0.85, bassWarmth: 1.35
+      },
       mega_canyon: {
-        resonanceFreq: 22, resonanceQ: 0.6, airGain: 0.40,
-        irLengthSec: 11.0, decayRate: 1.80, preDelaySamples: Math.floor(sRate * 0.085),
-        itdSec: 0.0350, reflectionGain: 0.22, hfDamping: 0.90, bassWarmth: 1.55
+        isOutdoor: true, resonanceFreq: 18, resonanceQ: 0.45, airGain: 0.40,
+        irLengthSec: 12.5, decayRate: 2.10, preDelaySamples: Math.floor(sRate * 0.120),
+        itdSec: 0.0450, reflectionGain: 0.19, hfDamping: 0.95, bassWarmth: 1.55
       }
     };
 
     const p = profiles[presetKey] || profiles.standard;
 
-    // Air Cavity Resonance Bed
-    const roomNoise = ctx.createBufferSource();
-    roomNoise.buffer = this.noiseBuffers['pink'];
-    roomNoise.loop = true;
+    // Ambient Air Draft / Wind Breeze Generator
+    const ambientNoise = ctx.createBufferSource();
+    ambientNoise.buffer = p.isOutdoor ? this.noiseBuffers['pink'] : this.noiseBuffers['pink'];
+    ambientNoise.loop = true;
 
-    const roomFilter = ctx.createBiquadFilter();
+    const ambientFilter = ctx.createBiquadFilter();
     if (this.enableCoreParams) {
-      roomFilter.type = 'bandpass';
-      roomFilter.frequency.value = p.resonanceFreq;
-      roomFilter.Q.value = p.resonanceQ;
+      ambientFilter.type = p.isOutdoor ? 'lowpass' : 'bandpass';
+      ambientFilter.frequency.value = p.resonanceFreq * (p.isOutdoor ? 2.5 : 1.0);
+      ambientFilter.Q.value = p.resonanceQ;
     } else {
-      roomFilter.type = 'allpass';
+      ambientFilter.type = 'allpass';
     }
 
-    const roomGain = ctx.createGain();
-    roomGain.gain.value = this.enableCoreParams ? p.airGain : 0.001;
+    const ambientGain = ctx.createGain();
+    ambientGain.gain.value = this.enableCoreParams ? p.airGain : 0.001;
 
-    roomNoise.connect(roomFilter);
-    roomFilter.connect(roomGain);
-    roomGain.connect(merger);
-    roomNoise.start();
+    ambientNoise.connect(ambientFilter);
+    ambientFilter.connect(ambientGain);
+    ambientGain.connect(merger);
+    ambientNoise.start();
 
-    // Stereo Convolver with cached Binaural IR
+    // Convolver using cached spatial impulse response
     const convolver = ctx.createConvolver();
     convolver.buffer = this.getAnalyticalImpulseBuffer(presetKey, p, this.enableSecondaryParams);
 
-    roomGain.connect(convolver);
+    ambientGain.connect(convolver);
     convolver.connect(merger);
 
     merger._stop = () => {
-      try { roomNoise.stop(); } catch(e) {}
+      try { ambientNoise.stop(); } catch(e) {}
     };
 
     return merger;
@@ -335,7 +353,7 @@ export class AudioEngine {
       this.currentNoiseNode.loop = true;
       this.currentNoiseNode.start();
       this.activeInputSourceNode = this.currentNoiseNode;
-    } else if (type === 'room') {
+    } else if (type === 'room_indoors' || type === 'room_outdoors' || type === 'room') {
       this.virtualRoomNode = this.createVirtualRoomStream(roomPreset);
       this.activeInputSourceNode = this.virtualRoomNode;
     } else if (type === 'file') {
@@ -390,9 +408,6 @@ export class AudioEngine {
     if (params.silenceVoids !== undefined) this.dspNode.parameters.get('silenceVoids').setValueAtTime(params.silenceVoids, t);
   }
 
-  /**
-   * High-Precision 32-Bit Float RT60 Determination Engine with Input Clipping Detection
-   */
   async determineRoomAcoustics(targetRoomPreset = 'standard') {
     await this.init();
     if (!this.micMediaStream || !this.micMediaStream.active) {
@@ -401,7 +416,6 @@ export class AudioEngine {
 
     const ctx = this.audioCtx;
 
-    // Multi-Octave Acoustic Test Burst (500Hz + 1000Hz)
     const osc1 = ctx.createOscillator();
     const osc2 = ctx.createOscillator();
     const probeGain = ctx.createGain();
@@ -457,8 +471,8 @@ export class AudioEngine {
       }
     }
 
-    const upperThresholdRms = peakRms * Math.pow(10.0, -5.0 / 20.0);  // -5 dB
-    const lowerThresholdRms = peakRms * Math.pow(10.0, -25.0 / 20.0); // -25 dB
+    const upperThresholdRms = peakRms * Math.pow(10.0, -5.0 / 20.0);
+    const lowerThresholdRms = peakRms * Math.pow(10.0, -25.0 / 20.0);
 
     let tStart = history[peakIdx].timeSec;
     let tEnd = history[history.length - 1].timeSec;
@@ -494,15 +508,21 @@ export class AudioEngine {
     }
 
     const targets = {
-      micro_helmet: { name: "Acoustic Helmet / Cranial Pod", rt60: 0.02, res: 1150, vol: 0.08 },
-      cockpit: { name: "Aircraft Cockpit / Phone Kiosk", rt60: 0.05, res: 720, vol: 1.2 },
-      booth: { name: "Vocal Isolation Pod", rt60: 0.08, res: 520, vol: 2.5 },
-      office: { name: "Small Studio / Bedroom", rt60: 0.35, res: 240, vol: 35 },
-      standard: { name: "Standard Tracking Space", rt60: 0.75, res: 175, vol: 90 },
-      auditorium: { name: "Recital Hall / Auditorium", rt60: 1.80, res: 95, vol: 2800 },
-      cathedral: { name: "Gothic Cathedral", rt60: 5.50, res: 48, vol: 85000 },
-      hangar: { name: "Airship Hangar / Cistern", rt60: 7.20, res: 34, vol: 180000 },
-      mega_canyon: { name: "Granite Mega-Canyon", rt60: 10.50, res: 22, vol: 650000 }
+      micro_helmet: { name: "Acoustic Helmet", rt60: 0.02, res: 1150 },
+      cockpit: { name: "Aircraft Cockpit", rt60: 0.05, res: 720 },
+      booth: { name: "Vocal Isolation Pod", rt60: 0.08, res: 520 },
+      office: { name: "Small Studio", rt60: 0.35, res: 240 },
+      standard: { name: "Standard Tracking Space", rt60: 0.75, res: 175 },
+      auditorium: { name: "Recital Hall", rt60: 1.80, res: 95 },
+      cathedral: { name: "Gothic Cathedral", rt60: 5.50, res: 48 },
+      hangar: { name: "Airship Hangar", rt60: 7.20, res: 34 },
+      subterranean_vault: { name: "Salt Mine Vault", rt60: 8.80, res: 28 },
+      urban_balcony: { name: "Urban Courtyard", rt60: 0.40, res: 180 },
+      amphitheater: { name: "Open Amphitheater", rt60: 1.20, res: 110 },
+      forest_clearing: { name: "Pine Forest", rt60: 1.90, res: 85 },
+      quarry: { name: "Granite Quarry", rt60: 4.80, res: 55 },
+      alpine_valley: { name: "Alpine Valley", rt60: 8.50, res: 32 },
+      mega_canyon: { name: "Desert Mega-Canyon", rt60: 12.00, res: 18 }
     };
 
     const target = targets[targetRoomPreset] || targets.standard;

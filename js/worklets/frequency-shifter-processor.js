@@ -1,12 +1,5 @@
 /**
- * Hilbert SSB Frequency Shifter AudioWorkletProcessor v3.2.0
- *
- * Performance & Hardening Features:
- * - k-Rate Butterworth Anti-Aliasing Guard (Zero-trig sample processing loop)
- * - Click-Free Silence Voids Crossfade Ramp (64-sample linear gain transition)
- * - Precomputed 4th-Order Cascaded Bandstop Notch Biquad Coefficients
- * - Sub-Bass De-Bleed Filter (R=0.996 DC Blocker, fc ≈ 30.5 Hz)
- * - 127-Tap Anti-Symmetric FIR Hilbert Transformer with Euclidean Modulo Carrier
+ * Hilbert SSB Frequency Shifter AudioWorkletProcessor v3.3.0
  */
 class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
@@ -27,12 +20,11 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
     this.twoPi = 2.0 * Math.PI;
 
     this.N = 127;
-    this.M = 63; // Group delay = 63 samples (1.31ms at 48kHz)
+    this.M = 63;
     this.bufMask = 255;
     this.buffer = new Float32Array(256);
     this.bufIndex = 0;
 
-    // Precompute 127-Tap Blackman-Harris Hilbert Coefficients
     this.h = new Float32Array(this.N);
     for (let i = 0; i < this.N; i++) {
       const k = i - this.M;
@@ -47,16 +39,12 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
       }
     }
 
-    // DC Blocker State (fc ≈ 30.5 Hz)
     this.dcX1 = 0.0;
     this.dcY1 = 0.0;
-
-    // 2nd-Order Anti-Aliasing Butterworth Lowpass States
     this.aa_x1 = 0.0; this.aa_x2 = 0.0;
     this.aa_y1 = 0.0; this.aa_y2 = 0.0;
 
-    // Precompute 4th-Order Cascaded Silence Voids Coefficients (Constructed ONCE)
-    // Void 1: 1000–2000 Hz (f0 = 1414.2 Hz, BW = 1000 Hz, Q = 1.414)
+    // Void 1: 1000–2000 Hz
     const w0_1 = this.twoPi * 1414.2 / this.sRate;
     const alpha_1 = Math.sin(w0_1) / (2.0 * 1.414);
     const cos_w0_1 = Math.cos(w0_1);
@@ -67,7 +55,7 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
     this.a1_1 = (-2.0 * cos_w0_1) / a0_1;
     this.a2_1 = (1.0 - alpha_1) / a0_1;
 
-    // Void 2: 8500–9500 Hz (f0 = 8986.1 Hz, BW = 1000 Hz, Q = 8.98)
+    // Void 2: 8500–9500 Hz
     const w0_2 = this.twoPi * 8986.1 / this.sRate;
     const alpha_2 = Math.sin(w0_2) / (2.0 * 8.98);
     const cos_w0_2 = Math.cos(w0_2);
@@ -78,15 +66,12 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
     this.a1_2 = (-2.0 * cos_w0_2) / a0_2;
     this.a2_2 = (1.0 - alpha_2) / a0_2;
 
-    // Filter States for 4th-Order Cascade
     this.v1_s1_x1 = 0.0; this.v1_s1_x2 = 0.0; this.v1_s1_y1 = 0.0; this.v1_s1_y2 = 0.0;
     this.v1_s2_x1 = 0.0; this.v1_s2_x2 = 0.0; this.v1_s2_y1 = 0.0; this.v1_s2_y2 = 0.0;
     this.v2_s1_x1 = 0.0; this.v2_s1_x2 = 0.0; this.v2_s1_y1 = 0.0; this.v2_s1_y2 = 0.0;
     this.v2_s2_x1 = 0.0; this.v2_s2_x2 = 0.0; this.v2_s2_y1 = 0.0; this.v2_s2_y2 = 0.0;
 
-    // Smooth gain ramp for click-free voids toggle
     this.currentVoidMix = 0.0;
-
     this.carrierPhase = 0.0;
     this.lfoPhase = 0.0;
     this.shSample = 0.0;
@@ -111,7 +96,6 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
     const silenceVoidsActive = (parameters.silenceVoids[0] !== undefined && parameters.silenceVoids[0] > 0.5);
     const targetVoidMix = silenceVoidsActive ? 1.0 : 0.0;
 
-    // --- k-RATE OPTIMIZATION: Compute Anti-Aliasing Butterworth Coefficients ONCE per block ---
     const baseShift = shiftHz[0] !== undefined ? shiftHz[0] : 0.0;
     const maxLfo = lfoDepthHz[0] !== undefined ? Math.abs(lfoDepthHz[0]) : 0.0;
     const peakPotentialShift = baseShift + maxLfo;
@@ -136,11 +120,9 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
       }
     }
 
-    // --- a-RATE SAMPLE PROCESSING LOOP (Pure Multiply-Accumulate arithmetic) ---
     for (let i = 0; i < numSamples; i++) {
       let rawSample = inCh[i];
 
-      // 1. Click-Free Silence Voids Crossfade Ramp (Ramps over 64 samples)
       if (this.currentVoidMix !== targetVoidMix) {
         const step = (targetVoidMix - this.currentVoidMix) > 0 ? 0.015625 : -0.015625;
         this.currentVoidMix += step;
@@ -150,22 +132,18 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
       }
 
       if (this.currentVoidMix > 0.001) {
-        // Void 1: Stage 1 (1–2 kHz)
         const v1_s1 = (this.b0_1 * rawSample) + (this.b1_1 * this.v1_s1_x1) + (this.b2_1 * this.v1_s1_x2) - (this.a1_1 * this.v1_s1_y1) - (this.a2_1 * this.v1_s1_y2);
         this.v1_s1_x2 = this.v1_s1_x1; this.v1_s1_x1 = rawSample;
         this.v1_s1_y2 = this.v1_s1_y1; this.v1_s1_y1 = v1_s1;
 
-        // Void 1: Stage 2
         const v1_s2 = (this.b0_1 * v1_s1) + (this.b1_1 * this.v1_s2_x1) + (this.b2_1 * this.v1_s2_x2) - (this.a1_1 * this.v1_s2_y1) - (this.a2_1 * this.v1_s2_y2);
         this.v1_s2_x2 = this.v1_s2_x1; this.v1_s2_x1 = v1_s1;
         this.v1_s2_y2 = this.v1_s2_y1; this.v1_s2_y1 = v1_s2;
 
-        // Void 2: Stage 1 (8.5–9.5 kHz)
         const v2_s1 = (this.b0_2 * v1_s2) + (this.b1_2 * this.v2_s1_x1) + (this.b2_2 * this.v2_s1_x2) - (this.a1_2 * this.v2_s1_y1) - (this.a2_2 * this.v2_s1_y2);
         this.v2_s1_x2 = this.v2_s1_x1; this.v2_s1_x1 = v1_s2;
         this.v2_s1_y2 = this.v2_s1_y1; this.v2_s1_y1 = v2_s1;
 
-        // Void 2: Stage 2
         const v2_s2 = (this.b0_2 * v2_s1) + (this.b1_2 * this.v2_s2_x1) + (this.b2_2 * this.v2_s2_x2) - (this.a1_2 * this.v2_s2_y1) - (this.a2_2 * this.v2_s2_y2);
         this.v2_s2_x2 = this.v2_s2_x1; this.v2_s2_x1 = v2_s1;
         this.v2_s2_y2 = this.v2_s2_y1; this.v2_s2_y1 = v2_s2;
@@ -173,12 +151,10 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
         rawSample = ((1.0 - this.currentVoidMix) * rawSample) + (this.currentVoidMix * v2_s2);
       }
 
-      // 2. Sub-Bass De-Bleed Filter (R = 0.996 DC Blocker, fc ≈ 30.5 Hz)
       const dcFiltered = rawSample - this.dcX1 + 0.996 * this.dcY1;
       this.dcX1 = rawSample;
       this.dcY1 = dcFiltered;
 
-      // 3. LFO State Increment
       const curLfoRate = lfoRateHz.length > 1 ? lfoRateHz[i] : lfoRateHz[0];
       const curLfoDepth = lfoDepthHz.length > 1 ? lfoDepthHz[i] : lfoDepthHz[0];
 
@@ -208,7 +184,6 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
       const curShift = shiftHz.length > 1 ? shiftHz[i] : shiftHz[0];
       const instShift = curShift + (lfoMod * curLfoDepth);
 
-      // 4. Execute 2nd-Order Resonant Butterworth Anti-Aliasing (Zero trig in loop)
       let processedInput = dcFiltered;
       if (applyAA) {
         const aa_out = (b0_aa * processedInput) + (b1_aa * this.aa_x1) + (b2_aa * this.aa_x2) - (a1_aa * this.aa_y1) - (a2_aa * this.aa_y2);
@@ -219,27 +194,22 @@ class HilbertFrequencyShifterProcessor extends AudioWorkletProcessor {
 
       this.buffer[this.bufIndex] = processedInput;
 
-      // 5. 127-Tap FIR Hilbert Convolution -> Quadrature (Q)
       let Q = 0.0;
       for (let k = 0; k < this.N; k++) {
         const idx = (this.bufIndex - k + 256) & this.bufMask;
         Q += this.buffer[idx] * this.h[k];
       }
 
-      // Group-delay matched in-phase signal (I, M=63)
       const I = this.buffer[(this.bufIndex - this.M + 256) & this.bufMask];
       this.bufIndex = (this.bufIndex + 1) & this.bufMask;
 
-      // 6. Single Sideband Complex Modulation: y = I * cos(φ) - Q * sin(φ)
       const cosPhi = Math.cos(this.carrierPhase);
       const sinPhi = Math.sin(this.carrierPhase);
       const wetSample = (I * cosPhi) - (Q * sinPhi);
 
-      // Carrier Accumulation with Euclidean Modulo (Anti-Drift)
       this.carrierPhase += (this.twoPi * instShift) / this.sRate;
       this.carrierPhase = ((this.carrierPhase % this.twoPi) + this.twoPi) % this.twoPi;
 
-      // 7. Time-Aligned Dry/Wet Mixing
       const curWet = wetMix.length > 1 ? wetMix[i] : wetMix[0];
       const mixedSample = ((1.0 - curWet) * I) + (curWet * wetSample);
       const clamped = Math.max(-0.99, Math.min(0.99, mixedSample));

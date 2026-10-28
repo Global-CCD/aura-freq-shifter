@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DSP Frequency Shifter & Live Audio Router v3.2.0</title>
+  <title>DSP Frequency Shifter & Live Audio Router v3.3.0</title>
 
   <!-- Pico.css v2 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
@@ -20,8 +20,8 @@
     <header class="app-header">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
         <div>
-          <h2 style="margin:0; font-size: 1.5rem;">SSB Frequency Shifter v3.2.0</h2>
-          <small style="color: var(--text-muted);">k-Rate Anti-Aliasing &bull; Binaural ITD Spaces &bull; Click-Free Silence Voids &bull; 32-Bit RT60</small>
+          <h2 style="margin:0; font-size: 1.5rem;">SSB Frequency Shifter v3.3.0</h2>
+          <small style="color: var(--text-muted);">Indoor &amp; Outdoor Spatial Streams &bull; Startup Diagnostics &bull; 1000 Hz LFO</small>
         </div>
         <div style="display:flex; align-items:center; gap:0.6rem;">
           <button id="themeToggleBtn" class="outline" style="min-height:36px; padding:0.25rem 0.75rem; font-size:0.85rem;">
@@ -189,7 +189,8 @@
       <label for="inputSourceTypeSelect">Input Mode:</label>
       <select id="inputSourceTypeSelect">
         <option value="mic">Live Microphone Input</option>
-        <option value="room" selected>Virtual Room Microphone Stream (Simulated Acoustics)</option>
+        <option value="room_indoors" selected>Virtual Indoor Microphone Stream (Enclosed Architectural Acoustics)</option>
+        <option value="room_outdoors">Virtual Outdoor Microphone Stream (Open-Air Environmental Acoustics)</option>
         <option value="noise">White &amp; Colored Noise Generator (Seamless Splice)</option>
         <option value="file">Pre-Recorded Audio File Upload</option>
       </select>
@@ -222,26 +223,35 @@
         </div>
       </div>
 
-      <!-- 9-Profile Continuum Virtual Room Sub-Panel -->
+      <!-- Indoor & Outdoor Spatial Continuum Sub-Panel -->
       <div id="roomInputSubPanel" style="display: block;">
         <label for="roomPresetSelect">Acoustic Space Profile &amp; Volume Continuum:</label>
         <select id="roomPresetSelect">
-          <option value="micro_helmet">Acoustic Helmet / Cranial Pod (~0.08 m³, RT60: 0.02s) [ABSOLUTE LOWER LIMIT]</option>
-          <option value="cockpit">Aircraft Cockpit / Phone Kiosk (~1.2 m³, RT60: 0.05s)</option>
-          <option value="booth">Vocal Isolation Pod (~2.5 m³, RT60: 0.08s)</option>
-          <option value="office">Small Studio / Bedroom (~35 m³, RT60: 0.35s)</option>
-          <option value="standard" selected>Standard Tracking Studio (~90 m³, RT60: 0.75s) [DEFAULT BASELINE]</option>
-          <option value="auditorium">Recital Hall / Auditorium (~2,800 m³, RT60: 1.80s)</option>
-          <option value="cathedral">Gothic Cathedral (~85,000 m³, RT60: 5.50s)</option>
-          <option value="hangar">Airship Hangar / Subterranean Cistern (~180,000 m³, RT60: 7.20s)</option>
-          <option value="mega_canyon">Granite Mega-Canyon (~650,000 m³, RT60: 10.50s) [ABSOLUTE UPPER LIMIT]</option>
+          <optgroup label="Indoor Enclosed Architecture">
+            <option value="micro_helmet">Acoustic Helmet / Cranial Pod (~0.08 m³, RT60: 0.02s) [INDOOR ABSOLUTE MIN]</option>
+            <option value="cockpit">Aircraft Cockpit / Kiosk (~1.2 m³, RT60: 0.05s)</option>
+            <option value="booth">Vocal Isolation Pod (~2.5 m³, RT60: 0.08s)</option>
+            <option value="office">Small Studio / Bedroom (~35 m³, RT60: 0.35s)</option>
+            <option value="standard" selected>Standard Tracking Studio (~90 m³, RT60: 0.75s) [DEFAULT BASELINE]</option>
+            <option value="auditorium">Recital Hall / Auditorium (~2,800 m³, RT60: 1.80s)</option>
+            <option value="cathedral">Gothic Cathedral Nave (~85,000 m³, RT60: 5.50s)</option>
+            <option value="hangar">Airship Hangar / Cistern (~180,000 m³, RT60: 7.20s)</option>
+            <option value="subterranean_vault">Deep Salt Mine / Vault (~350,000 m³, RT60: 8.80s) [INDOOR ABSOLUTE MAX]</option>
+          </optgroup>
+          <optgroup label="Outdoor Open-Air Environments">
+            <option value="urban_balcony">Urban Courtyard / Alley (~500 m³ eff., RT60: 0.40s) [OUTDOOR MIN]</option>
+            <option value="amphitheater">Open-Air Roman Amphitheater (~25,000 m³ eff., RT60: 1.20s)</option>
+            <option value="forest_clearing">Pine Forest Clearing (~75,000 m³ eff., RT60: 1.90s)</option>
+            <option value="quarry">Granite Rock Quarry (~300,000 m³ eff., RT60: 4.80s)</option>
+            <option value="alpine_valley">Mountain Alpine Valley (~1,500,000 m³ eff., RT60: 8.50s)</option>
+            <option value="mega_canyon">Grand Desert Canyon (~5,000,000 m³+ eff., RT60: 12.00s) [OUTDOOR ABSOLUTE MAX]</option>
+          </optgroup>
         </select>
 
         <div id="roomMetaDisplay" class="room-meta-box">
-          Volume: ~90 m³ | RT60: 0.75s | Cavity Resonance: 175 Hz (Tracking Studio - DEFAULT BASELINE)
+          INDOOR: Volume: ~90 m³ | RT60: 0.75s | Cavity Resonance: 175 Hz (Tracking Studio - DEFAULT BASELINE)
         </div>
 
-        <!-- Core vs Secondary Parameter Group Controls -->
         <div class="param-group-box">
           <strong style="font-size:0.85rem; display:block; margin-bottom:0.4rem;">Physical Spatial Attributes Control:</strong>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem;">
@@ -321,8 +331,8 @@
     <article class="dsp-card" id="spaceProfileMatrixCard">
       <div class="section-title">
         <div>
-          <h4 style="margin:0;">4. Complete Space Profile Matrix &amp; Reference (9 Profiles)</h4>
-          <small style="color:var(--text-muted);">Continuum from 0.08 m³ (Absolute Min) to 650,000 m³ (Absolute Max)</small>
+          <h4 style="margin:0;">4. Complete Space Profile Matrix &amp; Reference (15 Profiles)</h4>
+          <small style="color:var(--text-muted);">Indoor &amp; Outdoor Continuum from 0.08 m³ (Min) to 5,000,000 m³+ (Max)</small>
         </div>
       </div>
 
@@ -332,184 +342,187 @@
           <thead>
             <tr>
               <th>Preset ID</th>
-              <th>Acoustic Space Profile</th>
+              <th>Environment</th>
+              <th>Space Profile</th>
               <th>Volume</th>
               <th>RT60 Decay</th>
               <th>Air Resonance</th>
               <th>Pre-Delay &amp; ITD</th>
-              <th>Bass Warmth (BR)</th>
-              <th>Description / Character</th>
+              <th>Bass Warmth</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
+            <!-- Indoor Profiles -->
             <tr data-preset="micro_helmet">
               <td><code>micro_helmet</code></td>
-              <td><strong>Cranial Pod / Helmet</strong> <span class="matrix-badge" style="color:var(--accent-red);">Abs. Min</span></td>
+              <td><span class="matrix-badge">Indoor</span></td>
+              <td><strong>Cranial Pod / Helmet</strong> <span class="matrix-badge" style="color:var(--accent-red);">Indoor Min</span></td>
               <td><strong>0.08 m³</strong></td>
               <td>0.02 s</td>
               <td>1,150 Hz</td>
               <td>0 ms (ITD: 0.3 ms)</td>
               <td>0.85</td>
-              <td>Lumped-element pressure stiffness cavity; near-zero propagation decay.</td>
               <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('micro_helmet')">Audition</button></td>
             </tr>
             <tr data-preset="cockpit">
               <td><code>cockpit</code></td>
-              <td><strong>Aircraft Cockpit / Kiosk</strong></td>
+              <td><span class="matrix-badge">Indoor</span></td>
+              <td><strong>Aircraft Cockpit</strong></td>
               <td><strong>1.2 m³</strong></td>
               <td>0.05 s</td>
               <td>720 Hz</td>
               <td>2 ms (ITD: 0.8 ms)</td>
               <td>0.90</td>
-              <td>Ultra-compact metal/glass boundary reflection chamber.</td>
               <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('cockpit')">Audition</button></td>
             </tr>
             <tr data-preset="booth">
               <td><code>booth</code></td>
+              <td><span class="matrix-badge">Indoor</span></td>
               <td><strong>Vocal Isolation Pod</strong></td>
               <td><strong>2.5 m³</strong></td>
               <td>0.08 s</td>
               <td>520 Hz</td>
               <td>0 ms (ITD: 1.2 ms)</td>
               <td>0.95</td>
-              <td>Tightly damped studio vocal booth with rapid specular absorption.</td>
               <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('booth')">Audition</button></td>
             </tr>
             <tr data-preset="office">
               <td><code>office</code></td>
+              <td><span class="matrix-badge">Indoor</span></td>
               <td><strong>Small Studio / Bedroom</strong></td>
               <td><strong>35 m³</strong></td>
               <td>0.35 s</td>
               <td>240 Hz</td>
               <td>6 ms (ITD: 2.5 ms)</td>
               <td>1.05</td>
-              <td>Treated residential room with balanced early reflection decay.</td>
               <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('office')">Audition</button></td>
             </tr>
             <tr data-preset="standard" class="matrix-row-active">
               <td><code>standard</code></td>
-              <td><strong>Standard Tracking Space</strong> <span class="matrix-badge" style="background-color:rgba(26,127,55,0.15); color:var(--accent-green);">DEFAULT BASELINE</span></td>
+              <td><span class="matrix-badge">Indoor</span></td>
+              <td><strong>Standard Tracking Space</strong> <span class="matrix-badge" style="background-color:rgba(26,127,55,0.15); color:var(--accent-green);">DEFAULT</span></td>
               <td><strong>90 m³</strong></td>
               <td>0.75 s</td>
               <td>175 Hz</td>
               <td>0 ms (ITD: 3.5 ms)</td>
               <td>1.00</td>
-              <td>Authentic off-axis studio condenser microphone baseline ambience.</td>
               <td class="matrix-action-cell"><span class="badge-indicator badge-green matrix-badge-active">&#10004; ACTIVE</span></td>
             </tr>
             <tr data-preset="auditorium">
               <td><code>auditorium</code></td>
+              <td><span class="matrix-badge">Indoor</span></td>
               <td><strong>Concert Recital Hall</strong></td>
               <td><strong>2,800 m³</strong></td>
               <td>1.80 s</td>
               <td>95 Hz</td>
               <td>22 ms (ITD: 8.0 ms)</td>
               <td>1.15</td>
-              <td>Expansive lateral reflection spread with smooth musical decay.</td>
               <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('auditorium')">Audition</button></td>
             </tr>
             <tr data-preset="cathedral">
               <td><code>cathedral</code></td>
+              <td><span class="matrix-badge">Indoor</span></td>
               <td><strong>Gothic Cathedral</strong></td>
               <td><strong>85,000 m³</strong></td>
               <td>5.50 s</td>
               <td>48 Hz</td>
               <td>45 ms (ITD: 15.0 ms)</td>
               <td>1.30</td>
-              <td>Massive stone nave with 45ms pre-delay and dense reverberant tail.</td>
               <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('cathedral')">Audition</button></td>
             </tr>
             <tr data-preset="hangar">
               <td><code>hangar</code></td>
+              <td><span class="matrix-badge">Indoor</span></td>
               <td><strong>Airship Hangar / Cistern</strong></td>
               <td><strong>180,000 m³</strong></td>
               <td>7.20 s</td>
               <td>34 Hz</td>
               <td>65 ms (ITD: 22.0 ms)</td>
               <td>1.40</td>
-              <td>Enormous steel/concrete enclosure with heavy structural air resonance.</td>
               <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('hangar')">Audition</button></td>
+            </tr>
+            <tr data-preset="subterranean_vault">
+              <td><code>subterranean_vault</code></td>
+              <td><span class="matrix-badge">Indoor</span></td>
+              <td><strong>Deep Salt Mine Vault</strong> <span class="matrix-badge" style="color:var(--accent-red);">Indoor Max</span></td>
+              <td><strong>350,000 m³</strong></td>
+              <td>8.80 s</td>
+              <td>28 Hz</td>
+              <td>75 ms (ITD: 28.0 ms)</td>
+              <td>1.50</td>
+              <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('subterranean_vault')">Audition</button></td>
+            </tr>
+
+            <!-- Outdoor Profiles -->
+            <tr data-preset="urban_balcony">
+              <td><code>urban_balcony</code></td>
+              <td><span class="matrix-badge" style="color:var(--accent-amber);">Outdoor</span></td>
+              <td><strong>Urban Courtyard / Alley</strong> <span class="matrix-badge" style="color:var(--accent-amber);">Outdoor Min</span></td>
+              <td><strong>~500 m³</strong></td>
+              <td>0.40 s</td>
+              <td>180 Hz</td>
+              <td>8 ms (ITD: 4.0 ms)</td>
+              <td>0.90</td>
+              <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('urban_balcony')">Audition</button></td>
+            </tr>
+            <tr data-preset="amphitheater">
+              <td><code>amphitheater</code></td>
+              <td><span class="matrix-badge" style="color:var(--accent-amber);">Outdoor</span></td>
+              <td><strong>Open Roman Amphitheater</strong></td>
+              <td><strong>~25,000 m³</strong></td>
+              <td>1.20 s</td>
+              <td>110 Hz</td>
+              <td>25 ms (ITD: 12.0 ms)</td>
+              <td>0.95</td>
+              <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('amphitheater')">Audition</button></td>
+            </tr>
+            <tr data-preset="forest_clearing">
+              <td><code>forest_clearing</code></td>
+              <td><span class="matrix-badge" style="color:var(--accent-amber);">Outdoor</span></td>
+              <td><strong>Pine Forest Clearing</strong></td>
+              <td><strong>~75,000 m³</strong></td>
+              <td>1.90 s</td>
+              <td>85 Hz</td>
+              <td>40 ms (ITD: 18.0 ms)</td>
+              <td>1.05</td>
+              <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('forest_clearing')">Audition</button></td>
+            </tr>
+            <tr data-preset="quarry">
+              <td><code>quarry</code></td>
+              <td><span class="matrix-badge" style="color:var(--accent-amber);">Outdoor</span></td>
+              <td><strong>Granite Rock Quarry</strong></td>
+              <td><strong>~300,000 m³</strong></td>
+              <td>4.80 s</td>
+              <td>55 Hz</td>
+              <td>60 ms (ITD: 25.0 ms)</td>
+              <td>1.20</td>
+              <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('quarry')">Audition</button></td>
+            </tr>
+            <tr data-preset="alpine_valley">
+              <td><code>alpine_valley</code></td>
+              <td><span class="matrix-badge" style="color:var(--accent-amber);">Outdoor</span></td>
+              <td><strong>Mountain Alpine Valley</strong></td>
+              <td><strong>~1.5M m³</strong></td>
+              <td>8.50 s</td>
+              <td>32 Hz</td>
+              <td>90 ms (ITD: 35.0 ms)</td>
+              <td>1.35</td>
+              <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('alpine_valley')">Audition</button></td>
             </tr>
             <tr data-preset="mega_canyon">
               <td><code>mega_canyon</code></td>
-              <td><strong>Granite Mega-Canyon</strong> <span class="matrix-badge" style="color:var(--accent-red);">Abs. Max</span></td>
-              <td><strong>650,000 m³</strong></td>
-              <td>10.50 s</td>
-              <td>22 Hz</td>
-              <td>85 ms (ITD: 35.0 ms)</td>
+              <td><span class="matrix-badge" style="color:var(--accent-amber);">Outdoor</span></td>
+              <td><strong>Grand Desert Canyon</strong> <span class="matrix-badge" style="color:var(--accent-red);">Outdoor Max</span></td>
+              <td><strong>~5.0M m³+</strong></td>
+              <td>12.00 s</td>
+              <td>18 Hz</td>
+              <td>120 ms (ITD: 45.0 ms)</td>
               <td>1.55</td>
-              <td>Semi-bounded geological space dominated by molecular air absorption.</td>
               <td class="matrix-action-cell"><button type="button" class="outline matrix-btn-select" onclick="switchToVirtualRoom('mega_canyon')">Audition</button></td>
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <div style="margin-top: 1.5rem;">
-        <label><strong>Acoustic Parameter Definitions &amp; Column Reference:</strong></label>
-        <div class="table-scroll-container" role="region" aria-label="Acoustic Parameter Definitions Table" tabindex="0">
-          <table class="matrix-table">
-            <thead>
-              <tr>
-                <th style="min-width: 140px;">Column / Parameter</th>
-                <th style="min-width: 180px;">Acoustic Definition</th>
-                <th style="min-width: 220px;">DSP Simulation Implementation</th>
-                <th style="min-width: 190px;">Perceptual Audio Impact</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Preset ID</strong></td>
-                <td>Programmatic key representing a calibrated architectural room preset.</td>
-                <td>Lookup key in <code>AudioEngine.createVirtualRoomStream()</code> selecting filter coefficients and cached impulse buffers.</td>
-                <td>Instantaneous, click-free switching between architectural room models.</td>
-              </tr>
-              <tr>
-                <td><strong>Acoustic Space Profile</strong></td>
-                <td>Physical classification modeling structural geometry and reflective boundary materials.</td>
-                <td>Configures pre-delay timing, convolution duration, and high-frequency atmospheric damping factors.</td>
-                <td>Establishes perceived room scale, proximity to reflective boundaries, and spatial presence.</td>
-              </tr>
-              <tr>
-                <td><strong>Physical Volume</strong></td>
-                <td>Enclosed three-dimensional air volume (<em>V</em>) in cubic meters (m³), spanning 0.08 m³ to 650,000 m³.</td>
-                <td>Calculates mean free path (<em>l</em> = 4V/S) and impulse buffer allocation (<em>L</em> = f<sub>s</sub> × t<sub>ir</sub>).</td>
-                <td>Controls boundary bounce frequency; small volumes sound tight, large volumes sound cavernous.</td>
-              </tr>
-              <tr>
-                <td><strong>RT60 Decay</strong></td>
-                <td>Reverberation Time 60—time for acoustic energy to drop by 60 dB (Sabine formula: RT<sub>60</sub> ≈ 0.161 × V / A).</td>
-                <td>Sample-by-sample exponential decay envelope: h(t) = noise(t) × e<sup>-t / τ</sup> where τ = RT<sub>60</sub> / ln(1000).</td>
-                <td>Determines trail duration. Short times (0.02 s) produce dry intimacy; long times (10.5 s) sustain shifted harmonic tails.</td>
-              </tr>
-              <tr>
-                <td><strong>Air Resonance</strong></td>
-                <td>Dominant fundamental cavity resonant mode of the enclosed air mass combined with structural draft.</td>
-                <td>2nd-order Biquad bandpass filter (f<sub>0</sub> in Hz, Q-factor) filtering a looped pink noise bed.</td>
-                <td>Injects physical air presence—from cranial cavity boxiness (1,150 Hz) to infrasonic canyon rumble (22 Hz).</td>
-              </tr>
-              <tr>
-                <td><strong>Pre-Delay &amp; ITD</strong></td>
-                <td>Direct acoustic delay before first wall reflection plus interaural time difference between left and right ears.</td>
-                <td>Discrete silence offset buffer padding plus channel-specific ITD offset in Right channel buffer.</td>
-                <td>Creates true binaural head-related spatial width on headphones instead of flat dual-mono reverberation.</td>
-              </tr>
-              <tr>
-                <td><strong>Bass Warmth (BR)</strong></td>
-                <td>Bass Ratio: ratio of low-frequency reverberation decay (125–250 Hz) to mid-frequency decay (500–1000 Hz).</td>
-                <td>Time-dependent exponential low-frequency booster applied during analytical impulse response generation.</td>
-                <td>Replicates physical mass wall reflection behavior, enriching bass weight and spatial authority.</td>
-              </tr>
-              <tr>
-                <td><strong>Description / Character</strong></td>
-                <td>Perceptual acoustic signature detailing reflection density, pre-delay gap, and atmospheric frequency absorption.</td>
-                <td>Calculates initial silence pre-delay offsets (0 ms to 85 ms) and distance attenuation curves: 1 / (1 + α·t).</td>
-                <td>Imparts authentic off-axis boundary coloration, specular vs. diffuse spread, and distance perception.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
     </article>
 
@@ -550,7 +563,6 @@
         <span class="badge-indicator badge-green" style="font-size:0.75rem;">Nyquist Protected</span>
       </div>
 
-      <!-- Silence Voids Feature Control -->
       <div class="voids-panel-box">
         <label style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.25rem;">
           <input type="checkbox" id="silenceVoidsCheck" role="switch">
@@ -693,7 +705,13 @@
       <div class="section-title">
         <div>
           <h4 style="margin:0;">7. System Diagnostics &amp; Pre-Flight Check</h4>
-          <small style="color:var(--text-muted);">Automated probe checking core audio nodes &amp; hardware permissions</small>
+          <small style="color:var(--text-muted);">Automated probe checking core audio nodes &amp; hardware permissions on startup</small>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span id="preflightStatusBadge" class="badge-indicator badge-amber">⚡ Initializing Pre-Flight...</span>
+          <button type="button" class="outline" style="min-height:36px; padding:0.25rem 0.75rem; font-size:0.8rem;" onclick="runPreFlightHealthCheck()">
+            &#8635; Re-run Check
+          </button>
         </div>
       </div>
       <div id="diagnostics-table-container"></div>
