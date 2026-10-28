@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @fileoverview Pure Data Registry for Sound Design Presets
+ * @fileoverview Pure Data Registry for Factory Sound Design Presets
  */
 
 /** @type {Record<string, import('../types/audio-types.js').FactoryPresetDefinition>} */
@@ -9,13 +9,13 @@ export const FACTORY_PRESETS = {
     name: "Subtle Vocal Doubler / Chorus",
     shiftHz: 3, lfoShape: 0, lfoDepth: 2.0, lfoRate: 0.5, lfoPolarity: 0,
     dryWet: 0.5, space: "office", silenceVoids: 0,
-    desc: "Adds dimensional micro-pitch drift and warm residential early reflections to vocals."
+    desc: "Dimensional micro-pitch drift and warm residential early reflections for vocals."
   },
   sci_fi_void: {
     name: "Deep Sci-Fi Void Resonator",
     shiftHz: -150, lfoShape: 4, lfoDepth: 50.0, lfoRate: 2.0, lfoPolarity: 1,
     dryWet: 1.0, space: "cathedral", silenceVoids: 1,
-    desc: "Cavernous downward pitch translation with active 4th-order zero-energy silence voids at 1–2k and 8.5–9.5k."
+    desc: "Cavernous pitch dive with brickwall 4th-order zero-energy voids at 1–2k and 8.5–9.5k."
   },
   passthrough_clean: {
     name: "Acoustic Room Normalizer",
@@ -39,6 +39,6 @@ export const FACTORY_PRESETS = {
     name: "Pure Spectral Void Sieve",
     shiftHz: 0, lfoShape: 0, lfoDepth: 0.0, lfoRate: 1.0, lfoPolarity: 0,
     dryWet: 1.0, space: "standard", silenceVoids: 1,
-    desc: "0 Hz neutral passthrough with absolute 4th-order zero-energy voids at 1–2 kHz and 8.5–9.5 kHz."
+    desc: "0 Hz neutral passthrough with absolute zero-energy voids at 1–2 kHz and 8.5–9.5 kHz."
   }
 };

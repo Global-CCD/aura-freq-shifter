@@ -25,6 +25,9 @@
   --tabulator-row-even: #f6f8fa;
   --param-box-bg: rgba(0, 0, 0, 0.03);
   --instructions-box-bg: rgba(0, 0, 0, 0.05);
+  --table-badge-bg: rgba(9, 105, 218, 0.08);
+  --active-row-bg: rgba(26, 127, 55, 0.08);
+  --void-badge-bg: rgba(207, 34, 46, 0.1);
 
   /* Ergonomics & Touch */
   --target-touch-min: 48px;
@@ -54,4 +57,7 @@
   --tabulator-row-even: #0d1117;
   --param-box-bg: rgba(255, 255, 255, 0.03);
   --instructions-box-bg: rgba(255, 255, 255, 0.05);
+  --table-badge-bg: rgba(56, 189, 248, 0.12);
+  --active-row-bg: rgba(46, 204, 113, 0.12);
+  --void-badge-bg: rgba(231, 76, 60, 0.15);
 }

@@ -5,13 +5,12 @@
 import { store } from '../core/state-store.js';
 import { engine } from '../core/audio-engine.js';
 import { DOM } from './dom-selectors.js';
-import { ROOM_METADATA } from '../config/room-profiles.js';
+import { ROOM_PROFILES } from '../config/room-profiles.js';
 import { FACTORY_PRESETS } from '../config/factory-presets.js';
 import { startVisualizer, drawIdleFrame } from './visualizer.js';
 import { updateDiagRecord } from './diagnostics.js';
 
 export function initEventDelegation() {
-  // Click Action Delegation
   document.addEventListener('click', async (event) => {
     const target = /** @type {HTMLElement|null} */ (event.target);
     if (!target) return;
@@ -51,7 +50,7 @@ export function initEventDelegation() {
 
       case 'audition-space':
         const spaceId = /** @type {HTMLElement} */ (actionEl).dataset.presetId;
-        if (spaceId) await handleAuditionSpace(spaceId);
+        if (spaceId) await handleAuditionSpace(/** @type {any} */(spaceId));
         break;
 
       case 'load-preset':
@@ -62,6 +61,18 @@ export function initEventDelegation() {
       case 'switch-source':
         const srcType = /** @type {HTMLElement} */ (actionEl).dataset.sourceType;
         if (srcType) await handleSwitchSource(srcType);
+        break;
+
+      case 'apply-input':
+        await applyGraphRouting();
+        break;
+
+      case 'apply-output':
+        const outDev = DOM.control('output-device');
+        if (outDev) {
+          const res = await engine.setAdaptiveOutputSink(outDev.value);
+          updateOutputBadge('green', '&#10004;', res.fallback ? 'Default Output Active' : 'Sink Active');
+        }
         break;
 
       case 'set-quick-shift':
@@ -78,7 +89,6 @@ export function initEventDelegation() {
     }
   });
 
-  // Change & Input Controls Delegation
   document.addEventListener('change', async (event) => {
     const target = /** @type {HTMLInputElement|HTMLSelectElement|null} */ (event.target);
     if (!target || !target.dataset.control) return;
@@ -89,15 +99,22 @@ export function initEventDelegation() {
     await handleControlChange(control, value);
   });
 
-  // Master Gain Continuous Input
   document.addEventListener('input', (event) => {
     const target = /** @type {HTMLInputElement|null} */ (event.target);
-    if (!target || target.dataset.control !== 'master-gain') return;
+    if (!target) return;
 
-    const val = parseFloat(target.value);
-    engine.setMasterGain(val);
-    const display = DOM.display('gain-value');
-    if (display) display.textContent = `${Math.round(val * 100)}%`;
+    if (target.dataset.control === 'master-gain') {
+      const val = parseFloat(target.value);
+      engine.setMasterGain(val);
+      const display = DOM.display('gain-value');
+      if (display) display.textContent = `${Math.round(val * 100)}%`;
+    } else if (target.dataset.control === 'drr-proximity') {
+      const val = parseFloat(target.value);
+      store.setState({ drrDb: val });
+      const display = DOM.display('drr-display');
+      if (display) display.textContent = `${val > 0 ? '+' : ''}${val.toFixed(1)} dB`;
+      applyGraphRouting();
+    }
   });
 }
 
@@ -106,18 +123,18 @@ async function handleStart() {
   engine.transportLock = true;
   engine.transportAbortController = new AbortController();
 
+  engine.pokeHardwareAudioClock();
   const state = store.getState();
 
-  // Inverted Touch Step: Acquire mic immediately if mic mode is active
   if (state.inputSource === 'mic') {
     try {
-      await engine.acquireDirectMicrophone(state.selectedDeviceId);
+      await engine.acquireAdaptiveMicrophone(state.selectedDeviceId);
       hideFallbackBanner();
     } catch (err) {
       updateInputBadge('red', '&#10008;', 'Input Failed');
       updateDiagRecord(5, "Denied", `Error: ${/** @type {Error} */(err).message || 'Permission denied'}`);
       showFallbackBanner(/** @type {Error} */(err));
-      updateMasterBadge('amber', '?', 'Mic Blocked — Select Alternative');
+      updateMasterBadge('amber', '?', 'Mic Blocked — Fallback Active');
       engine.transportLock = false;
       return;
     }
@@ -199,7 +216,6 @@ async function handleRT60Probe() {
 
     const clone = /** @type {DocumentFragment} */ (template.content.cloneNode(true));
 
-    // Fill measured
     const measuredRt60El = clone.querySelector('[data-slot="measured-rt60"]');
     if (measuredRt60El) measuredRt60El.textContent = `${data.measuredRt60} s`;
 
@@ -220,7 +236,6 @@ async function handleRT60Probe() {
         : 'Physical room is drier than target; virtual convolution supplies required spatial tail.';
     }
 
-    // Modal Resonance
     const measuredResEl = clone.querySelector('[data-slot="measured-res"]');
     if (measuredResEl) measuredResEl.textContent = `${data.dominantFreq} Hz`;
 
@@ -230,7 +245,6 @@ async function handleRT60Probe() {
     const deltaResEl = clone.querySelector('[data-slot="delta-res"]');
     if (deltaResEl) deltaResEl.textContent = `${data.resDelta > 0 ? '+' : ''}${data.resDelta} Hz`;
 
-    // Noise Floor
     const noiseFloorEl = clone.querySelector('[data-slot="noise-floor"]');
     if (noiseFloorEl) noiseFloorEl.textContent = `${data.noiseFloorDb} dBFS`;
 
@@ -249,7 +263,7 @@ async function handleRT60Probe() {
 async function handleDirectMicRequest() {
   const state = store.getState();
   try {
-    await engine.acquireDirectMicrophone(state.selectedDeviceId);
+    await engine.acquireAdaptiveMicrophone(state.selectedDeviceId);
     hideFallbackBanner();
     await applyGraphRouting();
   } catch (err) {
@@ -258,17 +272,21 @@ async function handleDirectMicRequest() {
 }
 
 /**
- * @param {string} spaceId
+ * @param {import('../types/audio-types.js').SpacePresetKey} spaceId
  */
 async function handleAuditionSpace(spaceId) {
-  const isOutdoor = spaceId.startsWith('urban') || spaceId.startsWith('amphi') || spaceId.startsWith('forest') || spaceId.startsWith('quarry') || spaceId.startsWith('alpine') || spaceId.startsWith('mega');
+  const isOutdoor = ROOM_PROFILES[spaceId]?.isOutdoor || false;
   store.setState({
     inputSource: isOutdoor ? 'room_outdoors' : 'room_indoors',
+    activeSpatialDomain: isOutdoor ? 'outdoor' : 'indoor',
     activeRoomPreset: spaceId
   });
 
   const srcCtrl = DOM.control('input-source');
   if (srcCtrl) srcCtrl.value = isOutdoor ? 'room_outdoors' : 'room_indoors';
+
+  const domainCtrl = DOM.control('spatial-domain');
+  if (domainCtrl) domainCtrl.value = isOutdoor ? 'outdoor' : 'indoor';
 
   const roomCtrl = DOM.control('room-preset');
   if (roomCtrl) roomCtrl.value = spaceId;
@@ -296,7 +314,6 @@ async function handleLoadPreset(presetKey) {
     activePresetKey: presetKey
   });
 
-  // Sync inputs
   syncControlValue('freq-shift', String(p.shiftHz));
   syncControlValue('lfo-shape', String(p.lfoShape));
   syncControlValue('lfo-range', String(p.lfoDepth));
@@ -313,7 +330,6 @@ async function handleLoadPreset(presetKey) {
     syncRoomMeta(p.space);
   }
 
-  // Update DSP in worklet
   engine.updateDSPParameters({
     shiftHz: p.shiftHz,
     lfoDepthHz: p.lfoDepth,
@@ -353,14 +369,27 @@ async function handleControlChange(control, value) {
       await applyGraphRouting();
       break;
 
-    case 'input-device':
-      store.setState({ selectedDeviceId: value });
+    case 'spatial-domain':
+      store.setState({ activeSpatialDomain: value });
+      const targetPreset = value === 'outdoor' ? 'forest_clearing' : 'standard';
+      store.setState({
+        activeRoomPreset: targetPreset,
+        inputSource: value === 'outdoor' ? 'room_outdoors' : 'room_indoors'
+      });
+      syncControlValue('input-source', value === 'outdoor' ? 'room_outdoors' : 'room_indoors');
+      syncControlValue('room-preset', targetPreset);
+      syncRoomMeta(targetPreset);
       await applyGraphRouting();
       break;
 
     case 'room-preset':
       store.setState({ activeRoomPreset: value });
       syncRoomMeta(value);
+      await applyGraphRouting();
+      break;
+
+    case 'input-device':
+      store.setState({ selectedDeviceId: value });
       await applyGraphRouting();
       break;
 
@@ -419,7 +448,7 @@ async function handleControlChange(control, value) {
       break;
 
     case 'output-device':
-      const res = await engine.setOutputSink(value);
+      const res = await engine.setAdaptiveOutputSink(value);
       updateOutputBadge('green', '&#10004;', res.fallback ? 'Default Output Active' : 'Sink Active');
       break;
   }
@@ -435,7 +464,8 @@ async function applyGraphRouting() {
       state.noiseColor,
       state.activeRoomPreset,
       state.enableCoreParams,
-      state.enableSecondaryParams
+      state.enableSecondaryParams,
+      state.drrDb
     );
     updateInputBadge('green', '&#10004;', `${state.inputSource.toUpperCase()} Streaming`);
     hideFallbackBanner();
@@ -445,7 +475,6 @@ async function applyGraphRouting() {
   }
 }
 
-// Helpers
 function updateMasterBadge(type, symbol, text) {
   const b = DOM.display('master-badge');
   if (b) {
@@ -485,10 +514,11 @@ function hideFallbackBanner() {
 /** @param {string} spaceId */
 function syncRoomMeta(spaceId) {
   const meta = DOM.display('room-meta');
-  // @ts-ignore
-  if (meta) meta.textContent = ROOM_METADATA[spaceId] || '';
+  const def = ROOM_PROFILES[/** @type {any} */(spaceId)];
+  if (meta && def) {
+    meta.textContent = `${def.isOutdoor ? 'OUTDOOR' : 'INDOOR'}: Volume: ${def.volume} m³ | Dim: ${def.dimensions.L}×${def.dimensions.W}×${def.dimensions.H}m | RT60: ${def.rt60Octaves[3]}s | Mode: ${Math.round(def.axialModes[0])} Hz | DRR: ${def.drrDb} dB`;
+  }
 
-  // Sync Matrix Table
   document.querySelectorAll('[data-matrix-row]').forEach(tr => {
     // @ts-ignore
     if (tr.dataset.matrixRow === spaceId) {

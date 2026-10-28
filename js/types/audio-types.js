@@ -1,24 +1,27 @@
 /**
- * @fileoverview JSDoc Type Definitions for Static Type Safety
+ * @fileoverview JSDoc Type Definitions for 14-Parameter Spatial Model & Multi-Strategy I/O
  */
 
 /**
- * @typedef {'micro_helmet'|'cockpit'|'booth'|'office'|'standard'|'auditorium'|'cathedral'|'hangar'|'subterranean_vault'|'urban_balcony'|'amphitheater'|'forest_clearing'|'quarry'|'alpine_valley'|'mega_canyon'} SpacePresetKey
+ * @typedef {'in_ear_canal'|'sealed_headphone'|'micro_helmet'|'cockpit'|'booth'|'office'|'standard'|'auditorium'|'cathedral'|'hangar'|'subterranean_vault'|'megastructure_atrium'|'drainage_trench'|'street_portico'|'urban_balcony'|'amphitheater'|'forest_clearing'|'quarry'|'alpine_valley'|'mega_canyon'|'planetary_caldera'} SpacePresetKey
  */
 
 /**
  * @typedef {Object} SpaceProfileDefinition
  * @property {boolean} isOutdoor
- * @property {number} resonanceFreq
- * @property {number} resonanceQ
- * @property {number} airGain
- * @property {number} irLengthSec
- * @property {number} decayRate
- * @property {number} preDelaySamples
+ * @property {number} volume
+ * @property {{L: number, W: number, H: number}} dimensions
+ * @property {[number, number, number, number, number, number]} rt60Octaves
+ * @property {[number, number, number]} axialModes
+ * @property {number} preDelayMs
  * @property {number} itdSec
- * @property {number} reflectionGain
- * @property {number} hfDamping
  * @property {number} bassWarmth
+ * @property {number} airDamping
+ * @property {number} drrDb
+ * @property {number} scattering
+ * @property {number} tMixMs
+ * @property {number} flutterIndex
+ * @property {number} flowResistivity
  */
 
 /**

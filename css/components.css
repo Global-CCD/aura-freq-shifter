@@ -1,8 +1,7 @@
 /* ==========================================================================
-   Component Layer - Scalable, Class-Driven Presentation Rules
+   Component Layer - Scalable Presentation Rules
    ========================================================================== */
 
-/* Universal Resets */
 body {
   padding-bottom: 3.5rem;
   background-color: var(--color-bg-canvas);
@@ -12,14 +11,12 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Touch targets */
 button, select, input[type="file"], input[type="range"] {
   min-height: var(--target-touch-min);
   font-size: 1rem;
   touch-action: manipulation;
 }
 
-/* Header & Typography */
 .app-header {
   margin-top: 1rem;
   margin-bottom: 1.25rem;
@@ -37,19 +34,10 @@ button, select, input[type="file"], input[type="range"] {
   font-size: 1.5rem;
 }
 
-.text-muted {
-  color: var(--color-text-muted);
-}
+.text-muted { color: var(--color-text-muted); }
+.u-monospace { font-family: var(--font-mono); }
+.u-hidden { display: none !important; }
 
-.u-monospace {
-  font-family: var(--font-mono);
-}
-
-.u-hidden {
-  display: none !important;
-}
-
-/* Transport Controls Grid */
 .control-btn-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -58,9 +46,7 @@ button, select, input[type="file"], input[type="range"] {
 }
 
 @media (max-width: 576px) {
-  .control-btn-grid {
-    grid-template-columns: 1fr;
-  }
+  .control-btn-grid { grid-template-columns: 1fr; }
 }
 
 .btn-start {
@@ -84,7 +70,6 @@ button, select, input[type="file"], input[type="range"] {
   font-weight: bold;
 }
 
-/* DSP Panel Card */
 article.dsp-card {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border-subtle);
@@ -111,7 +96,6 @@ article.dsp-card {
   }
 }
 
-/* Status Badges */
 .badge-indicator {
   display: inline-flex;
   align-items: center;
@@ -158,7 +142,6 @@ article.dsp-card {
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
-/* Oscilloscope Canvas View */
 .visualizer-wrapper {
   position: relative;
   width: 100%;
@@ -200,7 +183,6 @@ article.dsp-card {
   border-radius: 2px;
 }
 
-/* Informational & Banners */
 .feedback-warning {
   font-size: 0.85rem;
   color: var(--color-accent-amber);
@@ -256,7 +238,6 @@ article.dsp-card {
   margin-top: 0.75rem;
 }
 
-/* Tables & Scrollable Containers */
 .table-scroll-container {
   width: 100%;
   overflow-x: auto;
@@ -272,7 +253,7 @@ article.dsp-card {
 
 .matrix-table {
   width: 100%;
-  min-width: 940px;
+  min-width: 980px;
   border-collapse: collapse;
   font-size: 0.85rem;
   margin: 0;
@@ -328,7 +309,6 @@ article.dsp-card {
   font-weight: 700;
 }
 
-/* Quick Increments Grid */
 .quick-offset-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
@@ -342,7 +322,6 @@ article.dsp-card {
   padding: 0.2rem;
 }
 
-/* Diagnostics Container */
 #diagnostics-table-container {
   font-size: 0.85rem;
   border-radius: var(--radius-md);

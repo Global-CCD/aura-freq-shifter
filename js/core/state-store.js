@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @fileoverview Observable Centralized Application State Store
+ * @fileoverview Observable State Store with Complete 14-Parameter Tracking
  */
 export class StateStore {
   /**
@@ -12,9 +12,6 @@ export class StateStore {
     this._subscribers = new Map();
   }
 
-  /**
-   * @returns {Readonly<Record<string, any>>}
-   */
   getState() {
     return Object.freeze({ ...this._state });
   }
@@ -39,7 +36,6 @@ export class StateStore {
   /**
    * @param {string} key
    * @param {Function} callback
-   * @returns {() => void} Unsubscribe function
    */
   subscribe(key, callback) {
     if (!this._subscribers.has(key)) {
@@ -56,14 +52,16 @@ export class StateStore {
 
 export const store = new StateStore({
   theme: 'light',
-  engineStatus: 'idle', // 'idle' | 'running' | 'paused' | 'error'
+  engineStatus: 'idle',
   inputSource: 'room_indoors',
   selectedDeviceId: 'default',
   passthrough: true,
   noiseColor: 'pink',
+  activeSpatialDomain: 'indoor',
   activeRoomPreset: 'standard',
   enableCoreParams: true,
   enableSecondaryParams: true,
+  drrDb: 0.0,
   shiftHz: 0.0,
   lfoShape: 0,
   lfoRange: 0.0,
@@ -72,7 +70,7 @@ export const store = new StateStore({
   dryWet: 1.0,
   silenceVoids: false,
   masterGain: 0.85,
-  soundConfirmed: false,
   peakDb: -Infinity,
+  micClipped: false,
   activePresetKey: ''
 });

@@ -3,7 +3,6 @@
  * @fileoverview High-DPI Oscilloscope Canvas Lifecycle & Idle Freeze
  */
 import { engine } from '../core/audio-engine.js';
-import { store } from '../core/state-store.js';
 import { DOM } from './dom-selectors.js';
 
 let animFrameId = null;
@@ -139,7 +138,6 @@ export function startVisualizer() {
       return;
     }
 
-    // Default Single/Overlaid Axis
     ctx2d.lineWidth = 1;
     ctx2d.strokeStyle = gridColor;
     ctx2d.beginPath();

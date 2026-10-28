@@ -73,7 +73,7 @@ export async function runPreFlightHealthCheck() {
   const badge = DOM.display("preflight-badge");
   if (badge) {
     badge.className = "badge-indicator badge-amber";
-    badge.innerHTML = `<span class="pulse-dot"></span> Diagnostics In Progress...`;
+    badge.innerHTML = `<span class="pulse-dot"></span> Pre-Flight Starting...`;
   }
 
   if (window.location.protocol === 'file:') {
