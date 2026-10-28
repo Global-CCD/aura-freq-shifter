@@ -311,7 +311,7 @@ article.dsp-card {
 
 .quick-offset-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
   gap: 0.4rem;
   margin-top: 0.5rem;
 }

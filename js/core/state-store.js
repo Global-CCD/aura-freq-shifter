@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @fileoverview Observable State Store with Complete 14-Parameter Tracking
+ * @fileoverview Observable State Store with Full 14-Parameter Tracking
  */
 export class StateStore {
   /**
@@ -57,10 +57,10 @@ export const store = new StateStore({
   selectedDeviceId: 'default',
   passthrough: true,
   noiseColor: 'pink',
-  activeSpatialDomain: 'indoor',
   activeRoomPreset: 'standard',
   enableCoreParams: true,
   enableSecondaryParams: true,
+  fileLoop: true,
   drrDb: 0.0,
   shiftHz: 0.0,
   lfoShape: 0,

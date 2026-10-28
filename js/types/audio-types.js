@@ -3,7 +3,7 @@
  */
 
 /**
- * @typedef {'in_ear_canal'|'sealed_headphone'|'micro_helmet'|'cockpit'|'booth'|'office'|'standard'|'auditorium'|'cathedral'|'hangar'|'subterranean_vault'|'megastructure_atrium'|'drainage_trench'|'street_portico'|'urban_balcony'|'amphitheater'|'forest_clearing'|'quarry'|'alpine_valley'|'mega_canyon'|'planetary_caldera'} SpacePresetKey
+ * @typedef {'ear_canal_coupler'|'in_ear_canal'|'sealed_headphone'|'micro_helmet'|'cockpit'|'booth'|'office'|'standard'|'auditorium'|'cathedral'|'hangar'|'subterranean_vault'|'megastructure_atrium'|'megalithic_borehole'|'well_shaft'|'drainage_trench'|'street_portico'|'urban_balcony'|'amphitheater'|'forest_clearing'|'quarry'|'alpine_valley'|'mega_canyon'|'glacial_chasm'|'planetary_caldera'} SpacePresetKey
  */
 
 /**

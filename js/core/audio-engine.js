@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @fileoverview Pure Web Audio Engine with 5-Stage Mic Fallback & 4-Stage Output Bridge
+ * @fileoverview Pure Web Audio Engine - Clamped Biquad Floor (>=32Hz) & 5-Stage Adaptive I/O
  */
 import { ROOM_PROFILES } from '../config/room-profiles.js';
 
@@ -12,10 +12,6 @@ export class AudioEngine {
     this.dspNode = null;
     /** @type {GainNode|null} */
     this.masterGainNode = null;
-    /** @type {GainNode|null} */
-    this.drrDirectGainNode = null;
-    /** @type {GainNode|null} */
-    this.drrReverbGainNode = null;
     /** @type {AnalyserNode|null} */
     this.inputAnalyserNode = null;
     /** @type {AnalyserNode|null} */
@@ -44,14 +40,11 @@ export class AudioEngine {
     /** @type {AbortController|null} */
     this.transportAbortController = null;
 
+    this.startTime = 0;
     this.smoothedPeakDb = -Infinity;
     this.lastSoundDetectedTime = 0;
   }
 
-  /**
-   * 5-Stage Adaptive Input Ingestion Pipeline
-   * @param {string|null} deviceId
-   */
   async acquireAdaptiveMicrophone(deviceId = null) {
     if (this.micMediaStream && this.micMediaStream.active) {
       return this.micMediaStream;
@@ -65,7 +58,7 @@ export class AudioEngine {
       ? { exact: deviceId }
       : undefined;
 
-    // STAGE 1: Studio Quality (Echo cancellation off, unconstrained latency)
+    // Stage 1: Studio Quality
     try {
       this.micMediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -77,10 +70,10 @@ export class AudioEngine {
       });
       return this.micMediaStream;
     } catch (e1) {
-      console.warn("Input Strategy 1 (Studio) rejected; attempting Strategy 2 (Relaxed Mobile)...");
+      console.warn("Input Strategy 1 rejected; falling back to Strategy 2 (Relaxed Mobile)...");
     }
 
-    // STAGE 2: Relaxed Mobile Capture (Standard mobile constraints)
+    // Stage 2: Relaxed Mobile Capture
     try {
       this.micMediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -90,17 +83,11 @@ export class AudioEngine {
       });
       return this.micMediaStream;
     } catch (e2) {
-      console.warn("Input Strategy 2 (Relaxed Mobile) rejected; attempting Strategy 3 (Generic Stream)...");
+      console.warn("Input Strategy 2 rejected; falling back to Strategy 3 (Generic Stream)...");
     }
 
-    // STAGE 3: Generic Stream Ingestion (Drop device targeting completely)
-    try {
-      this.micMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      return this.micMediaStream;
-    } catch (e3) {
-      // Rejections here trigger Stage 4 (Direct Touch Re-Arm) or Stage 5 (Synthetic Failover) in UI
-      throw e3;
-    }
+    // Stage 3: Generic Stream Ingestion
+    return await navigator.mediaDevices.getUserMedia({ audio: true });
   }
 
   async init() {
@@ -124,9 +111,6 @@ export class AudioEngine {
     this.masterGainNode = this.audioCtx.createGain();
     this.masterGainNode.gain.value = 0.85;
 
-    this.drrDirectGainNode = this.audioCtx.createGain();
-    this.drrReverbGainNode = this.audioCtx.createGain();
-
     this.inputAnalyserNode = this.audioCtx.createAnalyser();
     this.inputAnalyserNode.fftSize = 512;
 
@@ -140,9 +124,6 @@ export class AudioEngine {
     this.generateBalancedNoiseBuffers();
   }
 
-  /**
-   * Balanced Noise Generator: Normalized trim factors prevent Brown noise overload.
-   */
   generateBalancedNoiseBuffers() {
     if (!this.audioCtx) return;
     const ctx = this.audioCtx;
@@ -150,7 +131,6 @@ export class AudioEngine {
     const fadeLength = Math.floor(ctx.sampleRate * 0.025);
     const colors = ['white', 'pink', 'brown', 'blue', 'violet'];
 
-    // Auto-normalization trim factors
     const TRIMS = {
       white: 0.35,
       pink: 0.30,   // -1.5 dB trim
@@ -219,12 +199,6 @@ export class AudioEngine {
     });
   }
 
-  /**
-   * 14-Parameter Analytical Convolver Synthesis
-   * @param {import('../types/audio-types.js').SpacePresetKey} presetKey
-   * @param {import('../types/audio-types.js').SpaceProfileDefinition} p
-   * @param {boolean} useSecondary
-   */
   getAnalyticalImpulseBuffer(presetKey, p, useSecondary) {
     if (!this.audioCtx) return null;
     const cacheKey = `${presetKey}_${useSecondary ? 'sec' : 'flat'}`;
@@ -237,8 +211,6 @@ export class AudioEngine {
     const maxRt60 = Math.max(...p.rt60Octaves);
     const length = Math.min(Math.floor(sRate * maxRt60 * 1.1), Math.floor(sRate * 28.0));
     const impulse = ctx.createBuffer(2, length, sRate);
-
-    // Compute Schroeder mixing time boundary
     const tMixSamples = Math.floor(sRate * (p.tMixMs / 1000.0));
 
     for (let ch = 0; ch < 2; ch++) {
@@ -254,20 +226,15 @@ export class AudioEngine {
 
         const t = (i - preDelay) / sRate;
         const isEarly = (i - preDelay) < tMixSamples;
-
-        // Multi-band decay interpolation
         const tauMid = p.rt60Octaves[3] / Math.log(1000);
         const decay = Math.exp(-t / tauMid);
 
         let noise = (Math.random() * 2.0) - 1.0;
 
         if (useSecondary) {
-          // Early reflection scattering vs specular flutter
           if (isEarly && p.scattering < 0.5) {
             noise = (Math.sin(t * p.axialModes[0]) > 0.0 ? 1.0 : -1.0) * (1.0 - p.scattering) + noise * p.scattering;
           }
-
-          // ISO 9613-1 Atmospheric relaxation & Delany-Bazley porosity
           const hfAtten = 1.0 / (1.0 + (p.airDamping * t * 4.0));
           const bassBoost = 1.0 + (p.bassWarmth - 1.0) * Math.exp(-t / 0.8);
           chData[i] = noise * decay * 0.35 * hfAtten * bassBoost;
@@ -281,19 +248,13 @@ export class AudioEngine {
     return impulse;
   }
 
-  /**
-   * @param {import('../types/audio-types.js').SpacePresetKey} presetKey
-   * @param {boolean} enableCore
-   * @param {boolean} enableSecondary
-   * @param {number} drrDb
-   */
   createVirtualRoomStream(presetKey = 'standard', enableCore = true, enableSecondary = true, drrDb = 0.0) {
     if (!this.audioCtx) return null;
     const ctx = this.audioCtx;
     const merger = ctx.createGain();
     const p = ROOM_PROFILES[presetKey] || ROOM_PROFILES.standard;
 
-    // Ambient Air Draft / Wind Turbulence
+    // Ambient Air Draft / Turbulence
     const ambientNoise = ctx.createBufferSource();
     ambientNoise.buffer = this.noiseBuffers['pink'];
     ambientNoise.loop = true;
@@ -301,26 +262,30 @@ export class AudioEngine {
     const ambientFilter = ctx.createBiquadFilter();
     if (enableCore) {
       ambientFilter.type = p.isOutdoor ? 'lowpass' : 'bandpass';
-      ambientFilter.frequency.value = p.axialModes[0] * (p.isOutdoor ? 2.0 : 1.0);
+
+      // CRITICAL FIX: Clamp filter frequency to audible >= 32.0 Hz to prevent zeroing audible audio!
+      const rawMode = p.axialModes && p.axialModes[0] ? p.axialModes[0] : 100.0;
+      const targetFreq = rawMode * (p.isOutdoor ? 2.5 : 1.0);
+      ambientFilter.frequency.value = Math.max(32.0, Math.min(18000.0, targetFreq));
       ambientFilter.Q.value = 1.4;
     } else {
       ambientFilter.type = 'allpass';
     }
 
     const ambientGain = ctx.createGain();
-    ambientGain.gain.value = enableCore ? (p.isOutdoor ? 0.25 : 0.20) : 0.001;
+    // Ensures clean audible bed in monumental and micro spaces
+    ambientGain.gain.value = enableCore ? (p.isOutdoor ? 0.28 : 0.22) : 0.001;
 
     ambientNoise.connect(ambientFilter);
     ambientFilter.connect(ambientGain);
     ambientGain.connect(merger);
     ambientNoise.start();
 
-    // Stereo Convolver with 14-Parameter Analytical IR
+    // Convolver & DRR Proximity Engine
     const convolver = ctx.createConvolver();
     const ir = this.getAnalyticalImpulseBuffer(presetKey, p, enableSecondary);
     if (ir) convolver.buffer = ir;
 
-    // Direct-to-Reverberant Ratio (DRR) Proximity Engine
     const drrLinear = Math.pow(10, drrDb / 20.0);
     const directGain = drrLinear / Math.sqrt(1.0 + drrLinear * drrLinear);
     const reverbGain = 1.0 / Math.sqrt(1.0 + drrLinear * drrLinear);
@@ -345,17 +310,7 @@ export class AudioEngine {
     return merger;
   }
 
-  /**
-   * @param {string} type
-   * @param {string|null} deviceId
-   * @param {boolean} passthrough
-   * @param {string} color
-   * @param {import('../types/audio-types.js').SpacePresetKey} roomPreset
-   * @param {boolean} enableCore
-   * @param {boolean} enableSecondary
-   * @param {number} drrDb
-   */
-  async attachInputSource(type, deviceId, passthrough, color, roomPreset, enableCore, enableSecondary, drrDb = 0.0) {
+  async attachInputSource(type, deviceId, passthrough, color, roomPreset, enableCore, enableSecondary, drrDb = 0.0, fileLoop = true) {
     await this.init();
     if (!this.audioCtx || !this.inputAnalyserNode || !this.dspNode) return;
 
@@ -398,7 +353,7 @@ export class AudioEngine {
       }
       this.currentFileSourceNode = this.audioCtx.createBufferSource();
       this.currentFileSourceNode.buffer = this.fileAudioBuffer;
-      this.currentFileSourceNode.loop = true;
+      this.currentFileSourceNode.loop = fileLoop;
       this.currentFileSourceNode.start();
       this.activeInputSourceNode = this.currentFileSourceNode;
     }
@@ -411,16 +366,11 @@ export class AudioEngine {
     }
   }
 
-  /**
-   * 4-Stage Adaptive Output Routing Engine
-   * @param {string} deviceId
-   */
   async setAdaptiveOutputSink(deviceId) {
     await this.init();
     if (!this.audioCtx) return { strategy: 3, supported: false, fallback: true, deviceId: 'default' };
     const targetSink = (!deviceId || deviceId === 'default') ? '' : deviceId;
 
-    // STAGE 1: W3C AudioContext setSinkId
     // @ts-ignore
     if (typeof this.audioCtx.setSinkId === 'function') {
       try {
@@ -431,17 +381,13 @@ export class AudioEngine {
         }
         return { strategy: 1, supported: true, fallback: false, deviceId: targetSink || 'default' };
       } catch (err) {
-        console.warn("Sink Strategy 1 failed; attempting Strategy 2/3 fallback:", err);
+        console.warn("Sink Strategy 1 rejected; falling back to Strategy 3 (Destination)...", err);
       }
     }
 
-    // STAGE 2: Destination passthrough (Reliably active across mobile)
     return { strategy: 3, supported: false, fallback: true, deviceId: 'default' };
   }
 
-  /**
-   * Hardware Sleep Poke: iOS Mute switch bypass & mobile DAC wake-up
-   */
   pokeHardwareAudioClock() {
     if (!this.audioCtx) return;
     try {
@@ -453,18 +399,12 @@ export class AudioEngine {
     } catch(e) {}
   }
 
-  /**
-   * @param {number} value
-   */
   setMasterGain(value) {
     if (this.masterGainNode && this.audioCtx) {
       this.masterGainNode.gain.setValueAtTime(value, this.audioCtx.currentTime);
     }
   }
 
-  /**
-   * @param {Record<string, any>} params
-   */
   updateDSPParameters(params) {
     if (!this.dspNode || !this.audioCtx) return;
     const t = this.audioCtx.currentTime;
@@ -479,11 +419,6 @@ export class AudioEngine {
     if (params.silenceVoids !== undefined) p.get('silenceVoids').setValueAtTime(params.silenceVoids, t);
   }
 
-  /**
-   * 32-Bit Float RT60 Acoustic Analyzer
-   * @param {import('../types/audio-types.js').SpacePresetKey} targetRoomPreset
-   * @returns {Promise<import('../types/audio-types.js').RT60AnalysisResult>}
-   */
   async determineRoomAcoustics(targetRoomPreset = 'standard') {
     await this.init();
     if (!this.audioCtx || !this.inputAnalyserNode || !this.masterGainNode) {
@@ -585,7 +520,7 @@ export class AudioEngine {
     const targetDef = ROOM_PROFILES[targetRoomPreset] || ROOM_PROFILES.standard;
     const targetRt60 = targetDef.rt60Octaves[3];
     const rt60Delta = parseFloat((measuredRt60 - targetRt60).toFixed(2));
-    const resDelta = dominantFreq - targetDef.axialModes[0];
+    const resDelta = dominantFreq - Math.round(targetDef.axialModes[0]);
     const isClipped = maxAbsolutePeak > 0.95;
 
     return {
@@ -645,6 +580,7 @@ export class AudioEngine {
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       await this.audioCtx.resume();
     }
+    this.startTime = Date.now();
     this.isRunning = true;
   }
 
@@ -698,11 +634,12 @@ export class AudioEngine {
       this.smoothedPeakDb = (this.smoothedPeakDb * 0.93) + (instDb * 0.07);
     }
 
-    if (this.isRunning && (rms > 0.004 || maxDev > 0.015)) {
+    // Sensitive detection with 1.2s decay hold window
+    if (this.isRunning && (rms > 0.0015 || maxDev > 0.008)) {
       this.lastSoundDetectedTime = Date.now();
     }
 
-    const isSoundActive = this.isRunning && (Date.now() - this.lastSoundDetectedTime < 600);
+    const isSoundActive = this.isRunning && (Date.now() - this.lastSoundDetectedTime < 1200);
     return { rms, peakDb: this.smoothedPeakDb, isSoundActive };
   }
 }

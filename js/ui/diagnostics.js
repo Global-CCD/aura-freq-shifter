@@ -51,11 +51,6 @@ export function initDiagnosticsTable() {
   });
 }
 
-/**
- * @param {number} id
- * @param {string} status
- * @param {string} details
- */
 export function updateDiagRecord(id, status, details) {
   const now = new Date().toTimeString().split(' ')[0];
   const rec = diagnosticRecords.find(r => r.id === id);

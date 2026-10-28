@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * @fileoverview High-DPI Oscilloscope Canvas Lifecycle & Idle Freeze
+ * @fileoverview High-DPI Canvas Oscilloscope with Startup Detection Grace Window
  */
 import { engine } from '../core/audio-engine.js';
 import { DOM } from './dom-selectors.js';
@@ -84,13 +84,19 @@ export function startVisualizer() {
     const metrics = engine.getOutputMetrics();
     const confirmBadge = DOM.display("sound-confirmed-badge");
 
+    // Startup Detection Grace Window (400ms buffer clearance before testing silence)
+    const elapsedSinceStart = Date.now() - engine.startTime;
+
     if (confirmBadge) {
-      if (metrics.isSoundActive) {
+      if (elapsedSinceStart < 400 && !metrics.isSoundActive) {
+        confirmBadge.className = "badge-indicator badge-amber";
+        confirmBadge.innerHTML = `<span class="pulse-dot"></span> DETECTING SIGNAL...`;
+      } else if (metrics.isSoundActive) {
         confirmBadge.className = "badge-indicator badge-green";
         confirmBadge.innerHTML = `<span class="pulse-dot"></span> SOUND CONFIRMED (${metrics.peakDb.toFixed(1)} dBFS)`;
       } else {
         confirmBadge.className = "badge-indicator badge-amber";
-        confirmBadge.innerHTML = `<span>&#9679;</span> OUTPUT SILENT (&lt; -50 dBFS)`;
+        confirmBadge.innerHTML = `<span>●</span> OUTPUT SILENT (&lt; -50 dBFS)`;
       }
     }
 

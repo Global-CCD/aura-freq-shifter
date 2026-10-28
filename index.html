@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DSP Frequency Shifter & Live Audio Router v5.0.0</title>
+  <title>DSP Frequency Shifter & Live Audio Router v5.1.0</title>
 
   <!-- Pico.css v2 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
@@ -20,8 +20,8 @@
     <!-- Header -->
     <header class="app-header">
       <div>
-        <h2 class="app-title">SSB Frequency Shifter v5.0.0</h2>
-        <small class="text-muted">21 Spatial Profiles &bull; 14-Param Model &bull; 5-Stage Adaptive Mic &bull; 4-Stage Output</small>
+        <h2 class="app-title">SSB Frequency Shifter v5.1.0</h2>
+        <small class="text-muted">Clamped Filter Floor &bull; Streamlined Spatial Selectors &bull; 25 Acoustic Spaces</small>
       </div>
       <div style="display:flex; align-items:center; gap:0.6rem;">
         <button class="outline" data-action="toggle-theme" style="min-height:36px; padding:0.25rem 0.75rem; font-size:0.85rem;">
@@ -175,7 +175,7 @@
         </table>
       </div>
 
-      <!-- Table 3: Preset Parameter Technical Reference Drawer -->
+      <!-- Table 3: Preset Parameter Technical Reference -->
       <details style="margin-top: 1rem;">
         <summary style="font-size:0.88rem; font-weight:600; cursor:pointer;">
           📖 Preset Parameter Technical Definitions &amp; Routing Reference (Table 3)
@@ -194,7 +194,7 @@
               <tr>
                 <td><strong>Shift (Hz)</strong></td>
                 <td>Linear Frequency Offset (&plusmn;10 kHz)</td>
-                <td>SSB Complex Weaver/Hilbert quadrature heterodyne carrier accumulation.</td>
+                <td>SSB Complex Hilbert quadrature heterodyne carrier accumulation.</td>
                 <td>Inharmonic linear transposition; alien timbres, downward dives, or micro-detune.</td>
               </tr>
               <tr>
@@ -236,11 +236,12 @@
         </div>
       </div>
 
+      <!-- STREAMLINED INPUT MODE: Only ONE dropdown governing mode selection -->
       <label for="sel-input-source">Input Mode:</label>
       <select id="sel-input-source" data-control="input-source">
         <option value="mic">Live Microphone Input</option>
-        <option value="room_indoors" selected>Virtual Indoor Microphone Stream (Enclosed Architectural Acoustics)</option>
-        <option value="room_outdoors">Virtual Outdoor Microphone Stream (Open-Air Environmental Acoustics)</option>
+        <option value="room_indoors" selected>Virtual Indoor Acoustics (Enclosed Architecture)</option>
+        <option value="room_outdoors">Virtual Outdoor Acoustics (Open-Air Environments)</option>
         <option value="noise">White &amp; Colored Noise Generator (Seamless Splice)</option>
         <option value="file">Pre-Recorded Audio File Upload</option>
       </select>
@@ -269,50 +270,60 @@
         </div>
       </div>
 
-      <!-- Spatial Continuum Sub-Panel with 3-Tier Progressive Disclosure -->
+      <!-- STREAMLINED SPATIAL PANELS: Filtered contextually (Zero Redundant Dropdowns) -->
       <div id="panel-room">
-        <!-- Tier 1: Primary Controls -->
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem; margin-top:0.5rem;">
-          <div>
-            <label for="sel-spatial-domain">Spatial Domain:</label>
-            <select id="sel-spatial-domain" data-control="spatial-domain">
-              <option value="indoor" selected>Indoor Enclosed Architecture</option>
-              <option value="outdoor">Outdoor Open-Air Environments</option>
-            </select>
-          </div>
-          <div>
-            <label for="sel-room-preset">Environment Scale &amp; Preset:</label>
-            <select id="sel-room-preset" data-control="room-preset">
-              <optgroup label="Indoor Architecture (0.005 m³ to 1.2M m³)">
-                <option value="in_ear_canal">In-Ear Canal Cavity (~0.005 m³, 3ms) [INDOOR ABSOLUTE MIN]</option>
-                <option value="sealed_headphone">Sealed Earphone Cup (~0.025 m³, 8ms)</option>
-                <option value="micro_helmet">Cranial Helmet Pod (~0.08 m³, 20ms)</option>
-                <option value="cockpit">Aircraft Cockpit (~1.2 m³, 50ms)</option>
-                <option value="booth">Vocal Isolation Pod (~2.5 m³, 80ms)</option>
-                <option value="office">Small Studio / Bedroom (~35 m³, 350ms)</option>
-                <option value="standard" selected>Standard Tracking Studio (~90 m³, 750ms) [DEFAULT]</option>
-                <option value="auditorium">Concert Recital Hall (~2,800 m³, 1.8s)</option>
-                <option value="cathedral">Gothic Cathedral Nave (~85,000 m³, 5.5s)</option>
-                <option value="hangar">Airship Hangar (~180,000 m³, 7.2s)</option>
-                <option value="subterranean_vault">Salt Mine Vault (~350,000 m³, 8.8s)</option>
-                <option value="megastructure_atrium">Megastructure Atrium (~1,200,000 m³, 14.2s) [INDOOR ABSOLUTE MAX]</option>
-              </optgroup>
-              <optgroup label="Outdoor Environments (15 m³ to 100M m³+)">
-                <option value="drainage_trench">Drainage Trench (~15 m³ eff., 120ms) [OUTDOOR ABSOLUTE MIN]</option>
-                <option value="street_portico">Street Portico (~120 m³ eff., 280ms)</option>
-                <option value="urban_balcony">Urban Courtyard (~500 m³ eff., 400ms)</option>
-                <option value="amphitheater">Open Amphitheater (~25,000 m³ eff., 1.2s)</option>
-                <option value="forest_clearing">Pine Forest Clearing (~75,000 m³ eff., 1.9s)</option>
-                <option value="quarry">Granite Rock Quarry (~300,000 m³ eff., 4.8s)</option>
-                <option value="alpine_valley">Mountain Alpine Valley (~1,500,000 m³ eff., 8.5s)</option>
-                <option value="mega_canyon">Grand Desert Canyon (~5,000,000 m³ eff., 12.0s)</option>
-                <option value="planetary_caldera">Planetary Caldera (~100,000,000 m³+ eff., 28.0s) [OUTDOOR ABSOLUTE MAX]</option>
-              </optgroup>
-            </select>
-          </div>
+        <!-- Indoor Selector -->
+        <div id="wrapper-room-indoor">
+          <label for="sel-room-preset-indoor">Indoor Space Profile (0.001 m³ to 3,500,000 m³):</label>
+          <select id="sel-room-preset-indoor" data-control="room-preset-indoor">
+            <optgroup label="Micro-Cavities (< 1 m³)">
+              <option value="ear_canal_coupler">Ear Canal Coupler (~0.001 m³, 1.5ms) [INDOOR ABSOLUTE MIN]</option>
+              <option value="in_ear_canal">In-Ear Canal Cavity (~0.005 m³, 3ms)</option>
+              <option value="sealed_headphone">Sealed Earphone Cup (~0.025 m³, 8ms)</option>
+              <option value="micro_helmet">Cranial Helmet Pod (~0.08 m³, 20ms)</option>
+            </optgroup>
+            <optgroup label="Human Architecture (1 m³ to 100 m³)">
+              <option value="cockpit">Aircraft Cockpit (~1.2 m³, 50ms)</option>
+              <option value="booth">Vocal Isolation Pod (~2.5 m³, 80ms)</option>
+              <option value="office">Small Studio / Bedroom (~35 m³, 350ms)</option>
+              <option value="standard" selected>Standard Tracking Studio (~90 m³, 750ms) [DEFAULT BASELINE]</option>
+            </optgroup>
+            <optgroup label="Monumental Spaces &amp; Megastructures (> 1,000 m³)">
+              <option value="auditorium">Concert Recital Hall (~2,800 m³, 1.8s)</option>
+              <option value="cathedral">Gothic Cathedral Nave (~85,000 m³, 5.5s)</option>
+              <option value="hangar">Airship Hangar (~180,000 m³, 7.2s)</option>
+              <option value="subterranean_vault">Salt Mine Vault (~350,000 m³, 8.8s)</option>
+              <option value="megastructure_atrium">Megastructure Atrium (~1,200,000 m³, 14.2s)</option>
+              <option value="megalithic_borehole">Megalithic Borehole (~3,500,000 m³, 16.5s) [INDOOR ABSOLUTE MAX]</option>
+            </optgroup>
+          </select>
         </div>
 
-        <!-- Tier 1: Proximity DRR Slider -->
+        <!-- Outdoor Selector -->
+        <div id="wrapper-room-outdoor" class="u-hidden">
+          <label for="sel-room-preset-outdoor">Outdoor Environmental Profile (5 m³ to 250,000,000 m³+):</label>
+          <select id="sel-room-preset-outdoor" data-control="room-preset-outdoor">
+            <optgroup label="Confined Exterior (5 m³ to 500 m³)">
+              <option value="well_shaft">Stone Well Shaft (~5 m³ eff., 80ms) [OUTDOOR ABSOLUTE MIN]</option>
+              <option value="drainage_trench">Drainage Trench (~15 m³ eff., 120ms)</option>
+              <option value="street_portico">Street Portico (~120 m³ eff., 280ms)</option>
+              <option value="urban_balcony">Urban Courtyard (~500 m³ eff., 400ms)</option>
+            </optgroup>
+            <optgroup label="Open Venues &amp; Terrain (25k m³ to 300k m³)">
+              <option value="amphitheater">Open Roman Amphitheater (~25,000 m³ eff., 1.2s)</option>
+              <option value="forest_clearing" selected>Pine Forest Clearing (~75,000 m³ eff., 1.9s)</option>
+              <option value="quarry">Granite Rock Quarry (~300,000 m³ eff., 4.8s)</option>
+            </optgroup>
+            <optgroup label="Geological Formations (> 1,000,000 m³)">
+              <option value="alpine_valley">Mountain Alpine Valley (~1,500,000 m³ eff., 8.5s)</option>
+              <option value="mega_canyon">Grand Desert Canyon (~5,000,000 m³ eff., 12.0s)</option>
+              <option value="glacial_chasm">Glacial Ice Chasm (~25,000,000 m³ eff., 18.0s)</option>
+              <option value="planetary_caldera">Planetary Caldera (~250,000,000 m³+ eff., 32.0s) [OUTDOOR ABSOLUTE MAX]</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Proximity DRR Slider -->
         <div style="margin-top:0.75rem;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <label for="rng-drr" style="margin-bottom:0.25rem;"><strong>Direct-to-Reverberant Ratio (DRR / Distance):</strong></label>
@@ -327,10 +338,10 @@
         </div>
 
         <div class="room-meta-box" data-display="room-meta">
-          INDOOR: Volume: ~90 m³ | Dim: 6.5×4.8×2.9m | RT60: 0.75s | Mode: 26 Hz | DRR: 0.0 dB
+          INDOOR: Volume: ~90 m³ | Dim: 6.5×4.8×2.9m | RT60: 0.75s | Mode: 175 Hz | DRR: 0.0 dB
         </div>
 
-        <!-- Tier 2: Physical Boundary Modifiers (Collapsible) -->
+        <!-- Physical Boundary Modifiers Drawer -->
         <details class="param-group-box">
           <summary style="font-size:0.85rem; font-weight:700; cursor:pointer;">
             ⚙️ Physical Boundary &amp; Material Modifiers (Tier 2)
@@ -376,6 +387,11 @@
       <div id="panel-file" class="u-hidden">
         <label for="file-audio-upload">Select Audio File (WAV, MP3, OGG, FLAC):</label>
         <input type="file" id="file-audio-upload" data-control="file-input" accept="audio/*">
+
+        <label style="margin-top:0.5rem; display:flex; align-items:center; gap:0.5rem; font-size:0.85rem;">
+          <input type="checkbox" data-control="file-loop" checked role="switch">
+          Loop File Playback
+        </label>
         <small class="text-muted" data-display="file-info" style="display:block; margin-top:0.3rem;">No file loaded yet.</small>
       </div>
 
@@ -403,12 +419,12 @@
       <div class="u-hidden" data-display="rt60-results"></div>
     </article>
 
-    <!-- Space Profile Matrix Card (Tier 3 Metrology) -->
+    <!-- Space Profile Matrix Card -->
     <article class="dsp-card">
       <div class="section-title">
         <div>
           <h4 style="margin:0;">4. Complete Space Profile Matrix &amp; Reference (Tier 3 Metrology)</h4>
-          <small class="text-muted">21 Spatial Profiles from 0.005 m³ (Absolute Min) to 100,000,000 m³+ (Absolute Max)</small>
+          <small class="text-muted">25 Spatial Profiles from 0.001 m³ (Absolute Min) to 250,000,000 m³+ (Absolute Max)</small>
         </div>
       </div>
 
@@ -430,15 +446,26 @@
             </tr>
           </thead>
           <tbody>
-            <!-- Indoor Profiles -->
+            <tr data-matrix-row="ear_canal_coupler">
+              <td><code>ear_canal_coupler</code></td>
+              <td><span class="matrix-badge">Indoor</span></td>
+              <td><strong>Ear Canal Coupler</strong> <span class="matrix-badge" style="color:var(--color-accent-red);">Abs. Min</span></td>
+              <td>0.001 m³</td>
+              <td>0.02×0.01×0.005m</td>
+              <td>0.0015 s</td>
+              <td>3,400 Hz</td>
+              <td>0 ms (ITD: 0.03 ms)</td>
+              <td>+18 dB</td>
+              <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="ear_canal_coupler">Audition</button></td>
+            </tr>
             <tr data-matrix-row="in_ear_canal">
               <td><code>in_ear_canal</code></td>
               <td><span class="matrix-badge">Indoor</span></td>
-              <td><strong>In-Ear Canal Cavity</strong> <span class="matrix-badge" style="color:var(--color-accent-red);">Abs. Min</span></td>
+              <td><strong>In-Ear Canal Cavity</strong></td>
               <td>0.005 m³</td>
               <td>0.02×0.01×0.01m</td>
               <td>0.003 s</td>
-              <td>6,860 Hz</td>
+              <td>2,850 Hz</td>
               <td>0 ms (ITD: 0.05 ms)</td>
               <td>+18 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="in_ear_canal">Audition</button></td>
@@ -450,7 +477,7 @@
               <td>0.025 m³</td>
               <td>0.05×0.05×0.01m</td>
               <td>0.008 s</td>
-              <td>3,430 Hz</td>
+              <td>1,850 Hz</td>
               <td>0.1 ms (ITD: 0.12 ms)</td>
               <td>+16 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="sealed_headphone">Audition</button></td>
@@ -462,7 +489,7 @@
               <td>0.080 m³</td>
               <td>0.25×0.22×0.28m</td>
               <td>0.020 s</td>
-              <td>686 Hz</td>
+              <td>1,150 Hz</td>
               <td>0.3 ms (ITD: 0.30 ms)</td>
               <td>+14 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="micro_helmet">Audition</button></td>
@@ -474,7 +501,7 @@
               <td>1.200 m³</td>
               <td>1.2×1.0×1.0m</td>
               <td>0.050 s</td>
-              <td>143 Hz</td>
+              <td>720 Hz</td>
               <td>2.0 ms (ITD: 0.80 ms)</td>
               <td>+10 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="cockpit">Audition</button></td>
@@ -486,7 +513,7 @@
               <td>2.500 m³</td>
               <td>1.5×1.2×2.1m</td>
               <td>0.080 s</td>
-              <td>114 Hz</td>
+              <td>520 Hz</td>
               <td>0 ms (ITD: 1.20 ms)</td>
               <td>+8 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="booth">Audition</button></td>
@@ -498,7 +525,7 @@
               <td>35.00 m³</td>
               <td>4.2×3.5×2.4m</td>
               <td>0.350 s</td>
-              <td>41 Hz</td>
+              <td>240 Hz</td>
               <td>6.0 ms (ITD: 2.50 ms)</td>
               <td>+4 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="office">Audition</button></td>
@@ -510,7 +537,7 @@
               <td>90.00 m³</td>
               <td>6.5×4.8×2.9m</td>
               <td>0.750 s</td>
-              <td>26 Hz</td>
+              <td>175 Hz</td>
               <td>0 ms (ITD: 3.50 ms)</td>
               <td>0 dB</td>
               <td data-slot="action"><span class="badge-indicator badge-green">&#10004; ACTIVE</span></td>
@@ -522,7 +549,7 @@
               <td>2,800 m³</td>
               <td>25×15×7.5m</td>
               <td>1.800 s</td>
-              <td>7 Hz</td>
+              <td>95 Hz</td>
               <td>22 ms (ITD: 8.00 ms)</td>
               <td>-6 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="auditorium">Audition</button></td>
@@ -534,7 +561,7 @@
               <td>85,000 m³</td>
               <td>85×28×36m</td>
               <td>5.500 s</td>
-              <td>2 Hz</td>
+              <td>48 Hz</td>
               <td>45 ms (ITD: 15.0 ms)</td>
               <td>-14 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="cathedral">Audition</button></td>
@@ -546,7 +573,7 @@
               <td>180,000 m³</td>
               <td>120×60×25m</td>
               <td>7.200 s</td>
-              <td>1 Hz</td>
+              <td>34 Hz</td>
               <td>65 ms (ITD: 22.0 ms)</td>
               <td>-18 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="hangar">Audition</button></td>
@@ -558,7 +585,7 @@
               <td>350,000 m³</td>
               <td>160×75×29m</td>
               <td>8.800 s</td>
-              <td>1 Hz</td>
+              <td>28 Hz</td>
               <td>75 ms (ITD: 28.0 ms)</td>
               <td>-20 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="subterranean_vault">Audition</button></td>
@@ -566,24 +593,49 @@
             <tr data-matrix-row="megastructure_atrium">
               <td><code>megastructure_atrium</code></td>
               <td><span class="matrix-badge">Indoor</span></td>
-              <td><strong>Megastructure Atrium</strong> <span class="matrix-badge" style="color:var(--color-accent-red);">Indoor Max</span></td>
+              <td><strong>Megastructure Atrium</strong></td>
               <td>1,200,000 m³</td>
               <td>220×110×50m</td>
               <td>14.20 s</td>
-              <td>1 Hz</td>
+              <td>24 Hz</td>
               <td>85 ms (ITD: 32.0 ms)</td>
               <td>-24 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="megastructure_atrium">Audition</button></td>
             </tr>
+            <tr data-matrix-row="megalithic_borehole">
+              <td><code>megalithic_borehole</code></td>
+              <td><span class="matrix-badge">Indoor</span></td>
+              <td><strong>Megalithic Borehole</strong> <span class="matrix-badge" style="color:var(--color-accent-red);">Indoor Max</span></td>
+              <td>3,500,000 m³</td>
+              <td>350×150×67m</td>
+              <td>16.50 s</td>
+              <td>20 Hz</td>
+              <td>95 ms (ITD: 38.0 ms)</td>
+              <td>-26 dB</td>
+              <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="megalithic_borehole">Audition</button></td>
+            </tr>
+
             <!-- Outdoor Profiles -->
+            <tr data-matrix-row="well_shaft">
+              <td><code>well_shaft</code></td>
+              <td><span class="matrix-badge" style="color:var(--color-accent-amber);">Outdoor</span></td>
+              <td><strong>Stone Well Shaft</strong> <span class="matrix-badge" style="color:var(--color-accent-amber);">Outdoor Min</span></td>
+              <td>~5 m³</td>
+              <td>8×0.8×0.8m</td>
+              <td>0.080 s</td>
+              <td>360 Hz</td>
+              <td>2.0 ms (ITD: 0.50 ms)</td>
+              <td>+8 dB</td>
+              <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="well_shaft">Audition</button></td>
+            </tr>
             <tr data-matrix-row="drainage_trench">
               <td><code>drainage_trench</code></td>
               <td><span class="matrix-badge" style="color:var(--color-accent-amber);">Outdoor</span></td>
-              <td><strong>Drainage Trench</strong> <span class="matrix-badge" style="color:var(--color-accent-amber);">Outdoor Min</span></td>
+              <td><strong>Drainage Trench</strong></td>
               <td>~15 m³</td>
               <td>12×1.0×1.2m</td>
               <td>0.120 s</td>
-              <td>14 Hz</td>
+              <td>260 Hz</td>
               <td>4.0 ms (ITD: 0.80 ms)</td>
               <td>+6 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="drainage_trench">Audition</button></td>
@@ -595,7 +647,7 @@
               <td>~120 m³</td>
               <td>18×2.5×2.7m</td>
               <td>0.280 s</td>
-              <td>10 Hz</td>
+              <td>160 Hz</td>
               <td>6.0 ms (ITD: 2.00 ms)</td>
               <td>+2 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="street_portico">Audition</button></td>
@@ -607,7 +659,7 @@
               <td>~500 m³</td>
               <td>20×8.0×3.1m</td>
               <td>0.400 s</td>
-              <td>9 Hz</td>
+              <td>110 Hz</td>
               <td>8.0 ms (ITD: 4.00 ms)</td>
               <td>0 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="urban_balcony">Audition</button></td>
@@ -619,7 +671,7 @@
               <td>~25,000 m³</td>
               <td>45×38×15m</td>
               <td>1.200 s</td>
-              <td>4 Hz</td>
+              <td>75 Hz</td>
               <td>25 ms (ITD: 12.0 ms)</td>
               <td>-6 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="amphitheater">Audition</button></td>
@@ -631,7 +683,7 @@
               <td>~75,000 m³</td>
               <td>60×50×25m</td>
               <td>1.900 s</td>
-              <td>3 Hz</td>
+              <td>65 Hz</td>
               <td>40 ms (ITD: 18.0 ms)</td>
               <td>-10 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="forest_clearing">Audition</button></td>
@@ -643,7 +695,7 @@
               <td>~300,000 m³</td>
               <td>110×80×34m</td>
               <td>4.800 s</td>
-              <td>2 Hz</td>
+              <td>45 Hz</td>
               <td>60 ms (ITD: 25.0 ms)</td>
               <td>-14 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="quarry">Audition</button></td>
@@ -655,7 +707,7 @@
               <td>~1.5M m³</td>
               <td>280×150×36m</td>
               <td>8.500 s</td>
-              <td>1 Hz</td>
+              <td>32 Hz</td>
               <td>90 ms (ITD: 35.0 ms)</td>
               <td>-18 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="alpine_valley">Audition</button></td>
@@ -667,19 +719,31 @@
               <td>~5.0M m³</td>
               <td>500×250×40m</td>
               <td>12.00 s</td>
-              <td>0.3 Hz</td>
+              <td>24 Hz</td>
               <td>120 ms (ITD: 45.0 ms)</td>
               <td>-22 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="mega_canyon">Audition</button></td>
+            </tr>
+            <tr data-matrix-row="glacial_chasm">
+              <td><code>glacial_chasm</code></td>
+              <td><span class="matrix-badge" style="color:var(--color-accent-amber);">Outdoor</span></td>
+              <td><strong>Glacial Ice Chasm</strong></td>
+              <td>~25M m³</td>
+              <td>1000×400×62m</td>
+              <td>18.00 s</td>
+              <td>20 Hz</td>
+              <td>160 ms (ITD: 48.0 ms)</td>
+              <td>-24 dB</td>
+              <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="glacial_chasm">Audition</button></td>
             </tr>
             <tr data-matrix-row="planetary_caldera">
               <td><code>planetary_caldera</code></td>
               <td><span class="matrix-badge" style="color:var(--color-accent-amber);">Outdoor</span></td>
               <td><strong>Planetary Caldera</strong> <span class="matrix-badge" style="color:var(--color-accent-red);">Abs. Max</span></td>
-              <td>~100M m³+</td>
-              <td>1500×1200×55m</td>
-              <td>28.00 s</td>
-              <td>0.1 Hz</td>
+              <td>~250M m³+</td>
+              <td>2500×2000×50m</td>
+              <td>32.00 s</td>
+              <td>20 Hz</td>
               <td>220 ms (ITD: 50.0 ms)</td>
               <td>-26 dB</td>
               <td data-slot="action"><button type="button" class="outline matrix-btn-select" data-action="audition-space" data-preset-id="planetary_caldera">Audition</button></td>
@@ -731,7 +795,7 @@
               <tr>
                 <td><strong>Pre-Delay &amp; ITD</strong></td>
                 <td>Initial boundary gap plus Woodworth interaural time difference.</td>
-                <td>Discrete silence buffer padding + channel 1 time offset (0.05 to 50 ms).</td>
+                <td>Discrete silence buffer padding + channel 1 time offset (0.03 to 50 ms).</td>
                 <td>Creates true binaural head-related spatial width on headphones.</td>
               </tr>
               <tr>
@@ -816,7 +880,6 @@
         <option value="10000">+10000 Hz (+10 kHz)</option>
       </select>
 
-      <!-- 2-Tier Responsive Octave Shift Grid -->
       <div class="quick-offset-grid">
         <button class="outline" data-action="set-quick-shift" data-shift="-1000">-1k</button>
         <button class="outline" data-action="set-quick-shift" data-shift="-500">-500</button>

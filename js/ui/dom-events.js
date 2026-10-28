@@ -276,20 +276,23 @@ async function handleDirectMicRequest() {
  */
 async function handleAuditionSpace(spaceId) {
   const isOutdoor = ROOM_PROFILES[spaceId]?.isOutdoor || false;
+  const newSource = isOutdoor ? 'room_outdoors' : 'room_indoors';
+
   store.setState({
-    inputSource: isOutdoor ? 'room_outdoors' : 'room_indoors',
-    activeSpatialDomain: isOutdoor ? 'outdoor' : 'indoor',
+    inputSource: newSource,
     activeRoomPreset: spaceId
   });
 
   const srcCtrl = DOM.control('input-source');
-  if (srcCtrl) srcCtrl.value = isOutdoor ? 'room_outdoors' : 'room_indoors';
+  if (srcCtrl) srcCtrl.value = newSource;
 
-  const domainCtrl = DOM.control('spatial-domain');
-  if (domainCtrl) domainCtrl.value = isOutdoor ? 'outdoor' : 'indoor';
+  updateSourceSubPanels(newSource);
 
-  const roomCtrl = DOM.control('room-preset');
-  if (roomCtrl) roomCtrl.value = spaceId;
+  if (isOutdoor) {
+    syncControlValue('room-preset-outdoor', spaceId);
+  } else {
+    syncControlValue('room-preset-indoor', spaceId);
+  }
 
   syncRoomMeta(spaceId);
   await applyGraphRouting();
@@ -302,6 +305,9 @@ async function handleLoadPreset(presetKey) {
   const p = FACTORY_PRESETS[presetKey];
   if (!p) return;
 
+  const isOutdoor = ROOM_PROFILES[p.space]?.isOutdoor || false;
+  const newSource = isOutdoor ? 'room_outdoors' : 'room_indoors';
+
   store.setState({
     shiftHz: p.shiftHz,
     lfoShape: p.lfoShape,
@@ -310,9 +316,13 @@ async function handleLoadPreset(presetKey) {
     lfoPolarity: p.lfoPolarity,
     dryWet: p.dryWet,
     silenceVoids: (p.silenceVoids === 1),
+    inputSource: newSource,
     activeRoomPreset: p.space,
     activePresetKey: presetKey
   });
+
+  syncControlValue('input-source', newSource);
+  updateSourceSubPanels(newSource);
 
   syncControlValue('freq-shift', String(p.shiftHz));
   syncControlValue('lfo-shape', String(p.lfoShape));
@@ -325,10 +335,12 @@ async function handleLoadPreset(presetKey) {
   if (voidCheck) voidCheck.checked = (p.silenceVoids === 1);
   updateSilenceVoidsBadge(p.silenceVoids === 1);
 
-  if (p.space) {
-    syncControlValue('room-preset', p.space);
-    syncRoomMeta(p.space);
+  if (isOutdoor) {
+    syncControlValue('room-preset-outdoor', p.space);
+  } else {
+    syncControlValue('room-preset-indoor', p.space);
   }
+  syncRoomMeta(p.space);
 
   engine.updateDSPParameters({
     shiftHz: p.shiftHz,
@@ -366,23 +378,24 @@ async function handleControlChange(control, value) {
     case 'input-source':
       store.setState({ inputSource: value });
       updateSourceSubPanels(value);
+      if (value === 'room_indoors') {
+        const indoorCtrl = DOM.control('room-preset-indoor');
+        if (indoorCtrl) {
+          store.setState({ activeRoomPreset: indoorCtrl.value });
+          syncRoomMeta(indoorCtrl.value);
+        }
+      } else if (value === 'room_outdoors') {
+        const outdoorCtrl = DOM.control('room-preset-outdoor');
+        if (outdoorCtrl) {
+          store.setState({ activeRoomPreset: outdoorCtrl.value });
+          syncRoomMeta(outdoorCtrl.value);
+        }
+      }
       await applyGraphRouting();
       break;
 
-    case 'spatial-domain':
-      store.setState({ activeSpatialDomain: value });
-      const targetPreset = value === 'outdoor' ? 'forest_clearing' : 'standard';
-      store.setState({
-        activeRoomPreset: targetPreset,
-        inputSource: value === 'outdoor' ? 'room_outdoors' : 'room_indoors'
-      });
-      syncControlValue('input-source', value === 'outdoor' ? 'room_outdoors' : 'room_indoors');
-      syncControlValue('room-preset', targetPreset);
-      syncRoomMeta(targetPreset);
-      await applyGraphRouting();
-      break;
-
-    case 'room-preset':
+    case 'room-preset-indoor':
+    case 'room-preset-outdoor':
       store.setState({ activeRoomPreset: value });
       syncRoomMeta(value);
       await applyGraphRouting();
@@ -409,6 +422,13 @@ async function handleControlChange(control, value) {
       store.setState({ silenceVoids: value });
       updateSilenceVoidsBadge(value);
       engine.updateDSPParameters({ silenceVoids: value ? 1.0 : 0.0 });
+      break;
+
+    case 'file-loop':
+      store.setState({ fileLoop: value });
+      if (engine.currentFileSourceNode) {
+        engine.currentFileSourceNode.loop = !!value;
+      }
       break;
 
     case 'freq-shift':
@@ -465,7 +485,8 @@ async function applyGraphRouting() {
       state.activeRoomPreset,
       state.enableCoreParams,
       state.enableSecondaryParams,
-      state.drrDb
+      state.drrDb,
+      state.fileLoop
     );
     updateInputBadge('green', '&#10004;', `${state.inputSource.toUpperCase()} Streaming`);
     hideFallbackBanner();
@@ -570,11 +591,14 @@ function highlightPresetRow(key) {
 
 /** @param {string} source */
 function updateSourceSubPanels(source) {
-  const isRoom = source === 'room_indoors' || source === 'room_outdoors';
+  const isIndoor = source === 'room_indoors';
+  const isOutdoor = source === 'room_outdoors';
   togglePanel('panel-mic', source === 'mic');
   togglePanel('panel-noise', source === 'noise');
   togglePanel('panel-file', source === 'file');
-  togglePanel('panel-room', isRoom);
+  togglePanel('panel-room', isIndoor || isOutdoor);
+  togglePanel('wrapper-room-indoor', isIndoor);
+  togglePanel('wrapper-room-outdoor', isOutdoor);
 }
 
 /**
