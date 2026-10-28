@@ -1,0 +1,11 @@
+{
+  "name": "dsp-frequency-shifter",
+  "version": "3.2.0",
+  "description": "Production SSB Frequency Shifter with Zero-Trig k-Rate AA Guard, Binaural ITD Spatial Modeling, and 4th-Order Silence Voids",
+  "scripts": {
+    "dev": "npx serve public"
+  },
+  "keywords": ["webaudio", "dsp", "frequency-shifter", "binaural-itd", "k-rate-dsp", "silence-voids", "rt60-analyzer"],
+  "author": "Audio Systems Engineering",
+  "license": "MIT"
+}
