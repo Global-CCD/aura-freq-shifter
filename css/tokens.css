@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Design Tokens - Centralized Variables for Layout, Colors & Typography
+   ========================================================================== */
+
+:root {
+  /* Surfaces & Backgrounds */
+  --color-bg-canvas: #f6f8fa;
+  --color-bg-surface: #ffffff;
+  --color-border-subtle: #d0d7de;
+  --color-text-main: #24292f;
+  --color-text-muted: #57606a;
+
+  /* Audio Status & Accents */
+  --color-accent-green: #1a7f37;
+  --color-accent-green-tint: rgba(26, 127, 55, 0.14);
+  --color-accent-red: #cf222e;
+  --color-accent-red-tint: rgba(207, 34, 46, 0.12);
+  --color-accent-amber: #9a6700;
+  --color-accent-amber-tint: rgba(154, 103, 0, 0.14);
+  --color-accent-blue: #0969da;
+  --color-accent-blue-tint: rgba(9, 105, 218, 0.1);
+
+  /* Component Palette */
+  --tabulator-bg: #ffffff;
+  --tabulator-row-even: #f6f8fa;
+  --param-box-bg: rgba(0, 0, 0, 0.03);
+  --instructions-box-bg: rgba(0, 0, 0, 0.05);
+
+  /* Ergonomics & Touch */
+  --target-touch-min: 48px;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-pill: 9999px;
+}
+
+:root[data-theme="dark"] {
+  --color-bg-canvas: #05070a;
+  --color-bg-surface: #161b22;
+  --color-border-subtle: #30363d;
+  --color-text-main: #e6edf3;
+  --color-text-muted: #8b949e;
+
+  --color-accent-green: #2ecc71;
+  --color-accent-green-tint: rgba(46, 204, 113, 0.18);
+  --color-accent-red: #e74c3c;
+  --color-accent-red-tint: rgba(231, 76, 60, 0.18);
+  --color-accent-amber: #f39c12;
+  --color-accent-amber-tint: rgba(243, 156, 18, 0.18);
+  --color-accent-blue: #38bdf8;
+  --color-accent-blue-tint: rgba(56, 189, 248, 0.12);
+
+  --tabulator-bg: #161b22;
+  --tabulator-row-even: #0d1117;
+  --param-box-bg: rgba(255, 255, 255, 0.03);
+  --instructions-box-bg: rgba(255, 255, 255, 0.05);
+}
