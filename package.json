@@ -1,11 +1,12 @@
 {
   "name": "dsp-frequency-shifter",
-  "version": "3.3.0",
-  "description": "Modular SSB Frequency Shifter with Automated Startup Diagnostics, Indoor & Outdoor Virtual Acoustic Streams, and 1000Hz LFO",
+  "version": "4.0.0",
+  "description": "Refactored Modular SSB Frequency Shifter: Decoupled DOM, Observable State Store, Design Tokens & Type-Safe JSDoc",
+  "type": "module",
   "scripts": {
     "dev": "npx serve public"
   },
-  "keywords": ["webaudio", "dsp", "frequency-shifter", "indoor-acoustics", "outdoor-acoustics", "preflight-diagnostics"],
+  "keywords": ["webaudio", "dsp", "refactored", "state-store", "design-tokens", "jsdoc"],
   "author": "Audio Systems Engineering",
   "license": "MIT"
 }

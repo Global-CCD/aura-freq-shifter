@@ -1,11 +1,13 @@
-# DSP Frequency Shifter & Live Audio Router v3.3.0
+# DSP Frequency Shifter & Live Audio Router v4.0.0
 
-Production Single-Page Web Application featuring modular ES architecture, automated startup diagnostics probe, indoor and outdoor spatial acoustic streams, and 15 spatial profiles spanning micro-cavities (0.08 m³) to planetary canyons (5,000,000 m³+).
+Fully refactored production Single-Page Web Application featuring clean DOM decoupling, centralized Observable state, modular CSS design tokens, and typed JSDoc architecture.
 
-## Key Updates in v3.3.0
-- **Automated Startup Diagnostics:** Pre-flight diagnostics initialize and probe all 7 audio modules immediately when the page loads without requiring user interaction.
-- **Indoor vs. Outdoor Spatial Audio Split:** Independent input modes and acoustic synthesis for enclosed architecture vs. open-air environmental acoustics.
-- **15-Profile Spatial Continuum:** Includes absolute minimums and maximums across both indoor and outdoor categories.
+## Architecture Highlights
+- **Decoupled DOM:** Zero inline event handlers (`onclick`, `onchange`). All actions route through declarative `data-action` and `data-control` attributes via document-level event delegation.
+- **Dynamic `<template>` Elements:** Clean native cloning for repeatable UI components (RT60 Scorecards, Table rows).
+- **Observable State Store:** Unified, subscription-driven unidirectional data flow.
+- **Pure Audio Engine:** `core/audio-engine.js` has zero DOM dependencies and can be tested in isolation.
+- **Static Type Safety:** Fully documented with JSDoc (`// @ts-check`).
 
 ## Local Development
 ```bash
